@@ -70,12 +70,12 @@ terms:
 
   - term: Annulation
     definition: Fin de la Rencontre décidée par le Demandeur, sans motif à donner.
-    forbidden: [Desistement, Abandon, Resiliation]
+    forbidden: [Abandon, Resiliation, Rupture]
     aggregate: Rencontre
 
   - term: Desistement
     definition: Retrait du Preneur d'une Rencontre, sans motif à donner, qui permet de solliciter quelqu'un d'autre.
-    forbidden: [Annulation, Abandon, Defection, Absence]
+    forbidden: [Abandon, Defection, Retrait]
     aggregate: Rencontre
 
   - term: Retour
