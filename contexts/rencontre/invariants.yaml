@@ -1,0 +1,51 @@
+context: rencontre
+invariants:
+  - id: INV-REN-001
+    regle: Une Rencontre a exactement deux Participants, le Demandeur et le Preneur d'une même DemandeAcceptee, et il existe au plus une Rencontre ouverte par Demande.
+    agregat: Rencontre
+    exemple_violation: Une deuxième Rencontre est ouverte pour la Demande de Camille alors que celle avec Léa est toujours Convenue.
+
+  - id: INV-REN-002
+    regle: Une PropositionDHeure et l'HeureConvenue sont toujours comprises dans le Creneau de la Demande d'origine.
+    agregat: Rencontre
+    exemple_violation: Pour un Creneau « demain après-midi », Léa propose 20 h et l'heure est convenue.
+
+  - id: INV-REN-003
+    regle: Une HeureConvenue exige qu'un Participant ait accepté la PropositionDHeure de l'autre ; un Participant ne peut pas accepter sa propre proposition.
+    agregat: Rencontre
+    exemple_violation: Léa propose 14 h 30 puis valide elle-même cette heure sans réponse de Camille.
+
+  - id: INV-REN-004
+    regle: Une Annulation (par le Demandeur) ou un Desistement (par le Preneur) est accepté sans motif, à tout moment avant que la Rencontre soit Terminee.
+    agregat: Rencontre
+    exemple_violation: Le Desistement de Léa est refusé parce que le champ « raison » est vide.
+
+  - id: INV-REN-005
+    regle: Seul le Demandeur peut annuler une Rencontre et seul le Preneur peut s'en désister.
+    agregat: Rencontre
+    exemple_violation: Camille, Demandeur, déclenche un Desistement qui relance les vagues de sa propre Demande.
+
+  - id: INV-REN-006
+    regle: Seuls les deux Participants peuvent écrire ou lire les Messages d'une Rencontre, et aucun Message ne peut être envoyé après une Annulation ou un Desistement.
+    agregat: Rencontre
+    exemple_violation: Karim, sollicité mais non retenu, lit les Messages entre Camille et Léa.
+
+  - id: INV-REN-007
+    regle: Chaque Participant donne au plus un Retour par Rencontre, et seulement après l'HeureConvenue.
+    agregat: Rencontre
+    exemple_violation: Camille envoie un Retour « Bien » à 10 h pour une HeureConvenue de 14 h 30.
+
+  - id: INV-REN-008
+    regle: Le Retour d'un Participant n'est jamais montré à l'autre Participant, et l'événement RetourDonne ne porte que l'identité de son auteur.
+    agregat: Rencontre
+    exemple_violation: Léa voit que Camille a répondu « Bof », ou RetourDonne contient l'identifiant de Léa.
+
+  - id: INV-REN-009
+    regle: Un Retour ne contient ni note, ni étoile, ni texte d'évaluation de l'autre Participant ; seulement un Ressenti et une Presence.
+    agregat: Rencontre
+    exemple_violation: Le Retour propose une note de 1 à 5 sur la ponctualité de Léa.
+
+  - id: INV-REN-010
+    regle: Avant l'ouverture de la Rencontre, aucun Participant ne connaît le Prenom de l'autre ; ensuite, seul le Prenom est révélé, jamais le nom, l'email ou le téléphone personnel.
+    agregat: Rencontre
+    exemple_violation: La fiche de Rencontre affiche « Léa Martin, 06 12 34 56 78 ».

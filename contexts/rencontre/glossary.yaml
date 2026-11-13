@@ -1,0 +1,99 @@
+context: rencontre
+# Termes interdits dans tout skoa : Patient, Client, Beneficiaire, Utilisateur,
+# PairAidant, PairAidance, Aidant, Benevole. « CoupDeMain » est un mot d'interface,
+# jamais un terme du domaine.
+terms:
+  - term: Rencontre
+    definition: Coup de main accepté entre un Demandeur et un Preneur, de l'acceptation jusqu'aux Retours.
+    forbidden: [CoupDeMain, RendezVous, Echange, Mission, Accompagnement, Seance, Intervention]
+    aggregate: Rencontre
+
+  - term: Participant
+    definition: L'une des deux personnes d'une Rencontre, le Demandeur ou le Preneur.
+    forbidden: [Utilisateur, Membre, Interlocuteur, Partenaire]
+    aggregate: Rencontre
+
+  - term: Demandeur
+    definition: Participant qui a envoyé la Demande à l'origine de la Rencontre.
+    forbidden: [Beneficiaire, Aide, Accompagne, Patient, Client]
+    aggregate: Rencontre
+
+  - term: Preneur
+    definition: Participant qui a accepté la Demande à l'origine de la Rencontre.
+    forbidden: [Aidant, PairAidant, Benevole, Accompagnant, Volontaire, Helper]
+    aggregate: Rencontre
+
+  - term: Prenom
+    definition: Seule donnée d'identité d'un Participant montrée à l'autre, révélée à l'ouverture de la Rencontre.
+    forbidden: [Nom, Pseudo, Identite, Profil]
+    aggregate: Rencontre
+
+  - term: Structure
+    definition: Association à laquelle appartiennent les deux Participants et qui sert de recours pendant la Rencontre.
+    forbidden: [Asso, Organisation, Tenant]
+    aggregate: null
+
+  - term: TelephoneDeLaStructure
+    definition: Numéro de la Structure affiché aux Participants comme recours en cas de souci.
+    forbidden: [Hotline, NumeroUrgence, Support]
+    aggregate: null
+
+  - term: Service
+    definition: Type de coup de main de la Demande d'origine, repris tel quel par la Rencontre.
+    forbidden: [Categorie, TypeAide, Prestation]
+    aggregate: Rencontre
+
+  - term: LieuDeRencontre
+    definition: Lieu public ou local de la Structure où les Participants se retrouvent, repris de la Demande.
+    forbidden: [Adresse, Domicile, PointDeRendezVous]
+    aggregate: Rencontre
+
+  - term: Creneau
+    definition: Jour et moment de la journée de la Demande d'origine, qui borne les PropositionDHeure.
+    forbidden: [RendezVous, Disponibilite, Date]
+    aggregate: Rencontre
+
+  - term: PropositionDHeure
+    definition: Heure précise suggérée par un Participant dans le Creneau, en attente d'accord de l'autre.
+    forbidden: [Invitation, Reservation, Planification]
+    aggregate: Rencontre
+
+  - term: HeureConvenue
+    definition: Heure précise acceptée par les deux Participants pour se retrouver.
+    forbidden: [RendezVous, HeureFixee, Horaire]
+    aggregate: Rencontre
+
+  - term: Message
+    definition: Texte écrit par un Participant à l'autre dans le cadre d'une Rencontre.
+    forbidden: [Chat, Commentaire, Conversation, Discussion]
+    aggregate: Rencontre
+
+  - term: Annulation
+    definition: Fin de la Rencontre décidée par le Demandeur, sans motif à donner.
+    forbidden: [Desistement, Abandon, Resiliation]
+    aggregate: Rencontre
+
+  - term: Desistement
+    definition: Retrait du Preneur d'une Rencontre, sans motif à donner, qui permet de solliciter quelqu'un d'autre.
+    forbidden: [Annulation, Abandon, Defection, Absence]
+    aggregate: Rencontre
+
+  - term: Retour
+    definition: Ce qu'un Participant confie après l'HeureConvenue, composé d'un Ressenti et d'une Presence, jamais montré à l'autre.
+    forbidden: [Avis, Note, Evaluation, Feedback, Commentaire, Notation]
+    aggregate: Rencontre
+
+  - term: Ressenti
+    definition: Réponse à « Comment ça s'est passé ? » parmi Bien, Bof ou BesoinDEnParler.
+    forbidden: [Note, Score, Satisfaction, Humeur]
+    aggregate: Rencontre
+
+  - term: BesoinDEnParler
+    definition: Ressenti par lequel un Participant demande à être recontacté par le Referent de la Structure.
+    forbidden: [Signalement, Plainte, Alerte, Incident, Urgence]
+    aggregate: Rencontre
+
+  - term: Presence
+    definition: Indication par un Participant que l'autre était présent ou non à l'HeureConvenue.
+    forbidden: [Absence, NoShow, Assiduite]
+    aggregate: Rencontre
