@@ -1,0 +1,139 @@
+context: mise-en-relation
+# Termes interdits dans tout skoa : Patient, Client, Beneficiaire, Utilisateur,
+# PairAidant, PairAidance, Aidant, Benevole. « CoupDeMain » est un mot d'interface,
+# jamais un terme du domaine.
+terms:
+  - term: Structure
+    definition: Association ou collectif dont les adhérents s'entraident ; tout ce BC est cloisonné par Structure.
+    forbidden: [Asso, Organisation, Tenant, Client]
+    aggregate: null
+
+  - term: Adherent
+    definition: Personne membre d'une Structure, qui peut envoyer des Demandes et proposer son aide par un Abonnement.
+    forbidden: [Utilisateur, Membre, Client, Beneficiaire, Patient, Usager]
+    aggregate: null
+
+  - term: Demandeur
+    definition: Adherent auteur d'une Demande.
+    forbidden: [Requerant, Beneficiaire, Aide, Accompagne]
+    aggregate: Demande
+
+  - term: Sollicite
+    definition: Adherent à qui une Sollicitation a été envoyée pour une Demande donnée.
+    forbidden: [Destinataire, Candidat, Aidant]
+    aggregate: Demande
+
+  - term: Preneur
+    definition: Sollicite qui a accepté la Demande, le premier à dire oui.
+    forbidden: [Aidant, PairAidant, Benevole, Accompagnant, Volontaire, Helper]
+    aggregate: Demande
+
+  - term: Referent
+    definition: Personne désignée par la Structure qui paramètre le CatalogueDeServices et les ReglesEnvoi.
+    forbidden: [Admin, Administrateur, Moderateur, Gestionnaire]
+    aggregate: null
+
+  - term: Demande
+    definition: Besoin d'un coup de main exprimé par un Demandeur pour un Service, un LieuDeRencontre et un Creneau.
+    forbidden: [CoupDeMain, Requete, Ticket, Mission, Besoin, Annonce]
+    aggregate: Demande
+
+  - term: Service
+    definition: Type de coup de main choisi dans le CatalogueDeServices de la Structure (transports, papier ensemble, rendez-vous, café).
+    forbidden: [Categorie, TypeAide, Prestation, Besoin]
+    aggregate: CatalogueDeServices
+
+  - term: CatalogueDeServices
+    definition: Liste fermée des Services qu'une Structure rend disponibles, sans champ libre.
+    forbidden: [Referentiel, ListeDeServices, Menu]
+    aggregate: CatalogueDeServices
+
+  - term: DelaiMinimum
+    definition: Temps minimal entre l'envoi d'une Demande et son Creneau, fixé par Service (la veille ou deux jours avant).
+    forbidden: [Preavis, DelaiDePrevenance]
+    aggregate: CatalogueDeServices
+
+  - term: LieuDeRencontre
+    definition: Lieu public, ou local de la Structure, où le Demandeur et le Preneur se retrouvent.
+    forbidden: [Adresse, Domicile, PointDeRendezVous]
+    aggregate: Demande
+
+  - term: Creneau
+    definition: Jour et moment de la journée (matin, après-midi, soir) souhaités par le Demandeur.
+    forbidden: [RendezVous, Disponibilite, Horaire, Date]
+    aggregate: Demande
+
+  - term: Echeance
+    definition: Instant au-delà duquel une Demande sans Preneur expire, calculé par les ReglesEnvoi (par exemple la veille à 18 h).
+    forbidden: [Deadline, DateLimite, Timeout]
+    aggregate: Demande
+
+  - term: Expiration
+    definition: Fin d'une Demande sans Preneur, à l'Echeance ou quand plus aucun Sollicite n'est possible.
+    forbidden: [Echec, Refus, Annulation]
+    aggregate: Demande
+
+  - term: Vague
+    definition: Groupe de Sollicitations envoyées au même moment pour une Demande.
+    forbidden: [Lot, Batch, Diffusion, Relance]
+    aggregate: Demande
+
+  - term: Sollicitation
+    definition: Proposition anonyme faite à un Sollicite de prendre une Demande, qui ne contient que le Service, la Distance et le Creneau.
+    forbidden: [Notification, Invitation, Alerte, Email, Contact]
+    aggregate: Demande
+
+  - term: SollicitationSansReponse
+    definition: Sollicitation restée sans réponse à la fin de sa Demande, comptée sans jamais être pénalisée.
+    forbidden: [Refus, NonReponse, Ignore, Absence]
+    aggregate: Abonnement
+
+  - term: ReglesEnvoi
+    definition: Paramètres d'une Structure qui gouvernent le choix et le rythme des Sollicitations.
+    forbidden: [Configuration, Algorithme, Parametrage]
+    aggregate: ReglesEnvoi
+
+  - term: TailleDeVague
+    definition: Nombre maximal de Sollicites dans une Vague (2 par défaut).
+    forbidden: [TailleDeLot]
+    aggregate: ReglesEnvoi
+
+  - term: IntervalleEntreVagues
+    definition: Temps minimal entre deux Vagues d'une même Demande (1 heure par défaut).
+    forbidden: [Frequence, Cadence]
+    aggregate: ReglesEnvoi
+
+  - term: HeuresCalmes
+    definition: Plage horaire pendant laquelle aucune Sollicitation n'est envoyée (21 h à 8 h par défaut).
+    forbidden: [Nuit, NePasDeranger, Silence]
+    aggregate: ReglesEnvoi
+
+  - term: Abonnement
+    definition: Engagement d'un Adherent à recevoir des Sollicitations pour certains Services, autour d'un PointDeReference et dans un Rayon.
+    forbidden: [CoupDeMain, Offre, Profil, Disponibilite, Inscription]
+    aggregate: Abonnement
+
+  - term: PointDeReference
+    definition: Position de l'Adherent arrondie à environ 500 m, à partir de laquelle se calculent les Distances.
+    forbidden: [Adresse, Localisation, Domicile, Geolocalisation]
+    aggregate: Abonnement
+
+  - term: Rayon
+    definition: Distance maximale autour du PointDeReference dans laquelle un Adherent accepte d'être sollicité.
+    forbidden: [Perimetre, Zone, Secteur]
+    aggregate: Abonnement
+
+  - term: Distance
+    definition: Écart approximatif entre le LieuDeRencontre et le PointDeReference, seule information de lieu montrée à un Sollicite.
+    forbidden: [Adresse, Proximite]
+    aggregate: Demande
+
+  - term: PlafondHebdomadaire
+    definition: Nombre maximal de Demandes qu'un Adherent accepte de prendre par semaine, au-delà duquel il n'est plus sollicité.
+    forbidden: [Quota, Limite, Capacite]
+    aggregate: Abonnement
+
+  - term: Pause
+    definition: État d'un Abonnement pendant lequel l'Adherent ne reçoit aucune Sollicitation, choisi par lui seul.
+    forbidden: [Suspension, Desactivation, Blocage, Sanction]
+    aggregate: Abonnement

@@ -1,0 +1,71 @@
+context: mise-en-relation
+invariants:
+  - id: INV-MER-001
+    regle: Une Demande ne peut viser qu'un Service actif du CatalogueDeServices de la Structure du Demandeur.
+    agregat: Demande
+    exemple_violation: Une Demande « Besoin de parler, écoute » est acceptée alors que ce Service est désactivé chez AgoraFolks.
+
+  - id: INV-MER-002
+    regle: Le Creneau d'une Demande commence au plus tôt après le DelaiMinimum de son Service, compté depuis l'envoi.
+    agregat: Demande
+    exemple_violation: Une Demande « Transports » envoyée à 10 h pour l'après-midi même, alors que le DelaiMinimum est « la veille ».
+
+  - id: INV-MER-003
+    regle: Le LieuDeRencontre d'une Demande est un lieu public ou le local de la Structure, jamais un domicile.
+    agregat: Demande
+    exemple_violation: Une Demande indique « chez moi, 3e étage » comme LieuDeRencontre.
+
+  - id: INV-MER-004
+    regle: Une Sollicitation n'est jamais envoyée à un Adherent dont l'Abonnement est en Pause, ne couvre pas le Service, a atteint son PlafondHebdomadaire, ou dont le Rayon n'inclut pas le LieuDeRencontre.
+    agregat: Demande
+    exemple_violation: Léa, en Pause depuis lundi, reçoit une Sollicitation « Café, discuter » mardi.
+
+  - id: INV-MER-005
+    regle: Un Adherent n'est jamais sollicité pour sa propre Demande, ni deux fois pour la même Demande.
+    agregat: Demande
+    exemple_violation: Karim reçoit à 14 h puis à 15 h deux Sollicitations pour la même Demande de Camille.
+
+  - id: INV-MER-006
+    regle: Aucune Sollicitation n'est envoyée pendant les HeuresCalmes de la Structure ; une Vague qui y tomberait est reportée à leur fin.
+    agregat: Demande
+    exemple_violation: Une Vague part à 22 h 30 alors que les HeuresCalmes vont de 21 h à 8 h.
+
+  - id: INV-MER-007
+    regle: Une Vague contient au plus TailleDeVague Sollicitations, et deux Vagues d'une même Demande sont séparées d'au moins IntervalleEntreVagues.
+    agregat: Demande
+    exemple_violation: Une Demande déclenche 5 Sollicitations d'un coup, ou une deuxième Vague 10 minutes après la première alors que l'intervalle est d'1 heure.
+
+  - id: INV-MER-008
+    regle: Les Sollicites d'une Vague sont choisis par Distance croissante, puis, à Distance égale, par ancienneté de leur dernière Sollicitation.
+    agregat: Demande
+    exemple_violation: Un Adherent à 4 km, sollicité hier, passe devant un Adherent à 1 km jamais sollicité.
+
+  - id: INV-MER-009
+    regle: Une Demande n'a qu'un seul Preneur à la fois ; la première acceptation l'emporte et arrête toute nouvelle Vague.
+    agregat: Demande
+    exemple_violation: Léa et Karim acceptent tous deux la Demande de Camille et deux DemandeAcceptee sont publiées.
+
+  - id: INV-MER-010
+    regle: Une Sollicitation ne contient ni le prénom ni aucun identifiant lisible du Demandeur, seulement le Service, la Distance et le Creneau.
+    agregat: Demande
+    exemple_violation: L'email de Sollicitation reçu par Léa indique « Camille a besoin d'aide pour aller à la gare ».
+
+  - id: INV-MER-011
+    regle: Une SollicitationSansReponse n'entraîne aucune pénalité ni baisse de priorité ; atteindre le seuil de pause déclenche seulement une Pause proposée, que l'Adherent accepte ou non.
+    agregat: Abonnement
+    exemple_violation: Après 5 Sollicitations ignorées, l'Abonnement de Karim passe automatiquement en Pause.
+
+  - id: INV-MER-012
+    regle: Une Demande sans Preneur expire à son Echeance, ou dès qu'aucun Adherent ne peut plus être sollicité ; une Demande expirée ne reçoit plus d'acceptation.
+    agregat: Demande
+    exemple_violation: Léa accepte à 19 h une Demande dont l'Echeance était la veille à 18 h.
+
+  - id: INV-MER-013
+    regle: Un PointDeReference est toujours stocké arrondi à environ 500 m, et la Distance montrée est approximative.
+    agregat: Abonnement
+    exemple_violation: L'Abonnement de Léa enregistre sa position GPS exacte à 5 m près.
+
+  - id: INV-MER-014
+    regle: Après un DesistementSignale, la Demande reprend ses Vagues si son Echeance n'est pas atteinte, et le Preneur désisté n'est plus sollicité pour elle.
+    agregat: Demande
+    exemple_violation: Léa se désiste, et la Vague suivante la sollicite à nouveau pour la même Demande.
