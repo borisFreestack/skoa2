@@ -1,0 +1,99 @@
+context: suivi
+# Termes interdits dans tout skoa : Patient, Client, Beneficiaire, Utilisateur,
+# PairAidant, PairAidance, Aidant, Benevole. « CoupDeMain » est un mot d'interface,
+# jamais un terme du domaine.
+terms:
+  - term: Structure
+    definition: Association ou collectif dont les adhérents s'entraident, avec son Referent et son identité.
+    forbidden: [Asso, Organisation, Tenant, Client, Compte]
+    aggregate: Structure
+
+  - term: NomAffiche
+    definition: Nom de la Structure montré aux adhérents (par exemple « AgoraFolks »).
+    forbidden: [RaisonSociale, Libelle, Marque]
+    aggregate: Structure
+
+  - term: IdentiteVisuelle
+    definition: Logo et couleur de la Structure, affichés à côté de la mention « avec Skoa ».
+    forbidden: [Branding, Theme, Charte]
+    aggregate: Structure
+
+  - term: Referent
+    definition: Personne désignée par une Structure pour recontacter les adhérents et lire les Indicateurs.
+    forbidden: [Admin, Administrateur, Moderateur, Coordinateur, Superviseur, Gestionnaire]
+    aggregate: Structure
+
+  - term: TelephoneDeLaStructure
+    definition: Numéro de la Structure affiché aux adhérents comme recours.
+    forbidden: [Hotline, NumeroUrgence, Support]
+    aggregate: Structure
+
+  - term: Adherent
+    definition: Personne membre d'une Structure, connue ici seulement par ses événements et ses ElementATraiter.
+    forbidden: [Utilisateur, Membre, Client, Beneficiaire, Patient, Usager]
+    aggregate: null
+
+  - term: AdherentConcerne
+    definition: Seul Adherent nommé par un ElementATraiter, celui que le Referent doit recontacter.
+    forbidden: [Cible, Signale, Personne, Victime]
+    aggregate: ElementATraiter
+
+  - term: ElementATraiter
+    definition: Personne à recontacter par le Referent, ouverte pour un Motif.
+    forbidden: [Signalement, Ticket, Alerte, Incident, Tache, Cas]
+    aggregate: ElementATraiter
+
+  - term: Motif
+    definition: Raison d'un ElementATraiter, soit BesoinDEnParler, soit DemandeExpiree.
+    forbidden: [Cause, Categorie, Gravite]
+    aggregate: ElementATraiter
+
+  - term: BesoinDEnParler
+    definition: Motif ouvert quand un Retour exprime le souhait d'être recontacté par le Referent.
+    forbidden: [Signalement, Plainte, Alerte, Urgence]
+    aggregate: ElementATraiter
+
+  - term: DemandeExpiree
+    definition: Motif ouvert quand la Demande d'un Adherent a expiré sans Preneur.
+    forbidden: [Echec, DemandeRatee, DemandePerdue]
+    aggregate: ElementATraiter
+
+  - term: Rappel
+    definition: Prise de contact du Referent avec l'AdherentConcerne, qui clôt l'ElementATraiter.
+    forbidden: [Resolution, Cloture, Traitement, Intervention]
+    aggregate: ElementATraiter
+
+  - term: Indicateurs
+    definition: Chiffres agrégés de l'entraide d'une Structure pour une Periode, sans aucun contenu individuel.
+    forbidden: [Statistiques, Dashboard, KPI, Metriques, Reporting]
+    aggregate: Indicateurs
+
+  - term: Periode
+    definition: Mois calendaire sur lequel les Indicateurs sont calculés.
+    forbidden: [Intervalle, Plage, Fenetre]
+    aggregate: Indicateurs
+
+  - term: RencontreFaite
+    definition: Rencontre terminée, comptée dans les Indicateurs et dans l'ActiviteDeLaStructure.
+    forbidden: [CoupDeMain, Mission, Intervention, Prestation]
+    aggregate: Indicateurs
+
+  - term: TempsAvantAcceptation
+    definition: Durée entre l'envoi d'une Demande et son acceptation, moyennée par Periode.
+    forbidden: [DelaiDeReponse, TempsDeReponse, SLA]
+    aggregate: Indicateurs
+
+  - term: ServiceEnManque
+    definition: Service pour lequel trop peu d'adhérents proposent leur aide au regard des Demandes expirées.
+    forbidden: [Penurie, Carence, Deficit]
+    aggregate: Indicateurs
+
+  - term: ActiviteDeLaStructure
+    definition: Nombre de RencontreFaite du mois affiché à l'accueil des adhérents.
+    forbidden: [Compteur, Statistique, Classement]
+    aggregate: Indicateurs
+
+  - term: SeuilAffichageActivite
+    definition: Nombre minimal de RencontreFaite dans le mois pour que l'ActiviteDeLaStructure soit affichée (3 par défaut).
+    forbidden: [Minimum, Quota]
+    aggregate: Structure

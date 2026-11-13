@@ -1,0 +1,36 @@
+context: suivi
+invariants:
+  - id: INV-SUI-001
+    regle: Un ElementATraiter ne nomme que l'AdherentConcerne, jamais l'autre Participant de la Rencontre ni le Preneur d'une Demande.
+    agregat: ElementATraiter
+    exemple_violation: L'élément « Karim aimerait en parler » affiche aussi « Rencontre avec Léa ».
+
+  - id: INV-SUI-002
+    regle: Il existe exactement un ElementATraiter par RetourDonne au Ressenti BesoinDEnParler et par DemandeExpiree, même si l'événement est reçu plusieurs fois.
+    agregat: ElementATraiter
+    exemple_violation: Un DemandeExpiree rejoué après une panne crée un deuxième élément pour Inès.
+
+  - id: INV-SUI-003
+    regle: Un ElementATraiter n'est visible que du Referent de la Structure de l'AdherentConcerne.
+    agregat: ElementATraiter
+    exemple_violation: Le Referent d'une autre Structure voit l'élément « Inès, demande expirée » d'AgoraFolks.
+
+  - id: INV-SUI-004
+    regle: Un ElementATraiter n'est clos que par un Rappel du Referent, et un élément clos n'est jamais rouvert ; un nouveau Motif ouvre un nouvel élément.
+    agregat: ElementATraiter
+    exemple_violation: L'élément de Karim disparaît de « À traiter » sans Rappel, au bout de 7 jours.
+
+  - id: INV-SUI-005
+    regle: Les Indicateurs ne contiennent que des agrégats par Structure et par Periode, sans Message, sans Ressenti nominatif et sans identité d'Adherent.
+    agregat: Indicateurs
+    exemple_violation: Le suivi affiche « Léa : 4 retours Bof ce mois-ci ».
+
+  - id: INV-SUI-006
+    regle: L'ActiviteDeLaStructure n'est affichée à l'accueil que si le nombre de RencontreFaite du mois atteint le SeuilAffichageActivite.
+    agregat: Indicateurs
+    exemple_violation: L'accueil affiche « 1 coup de main ce mois-ci » alors que le seuil est de 3.
+
+  - id: INV-SUI-007
+    regle: Une Structure a exactement un Referent et un TelephoneDeLaStructure à tout moment.
+    agregat: Structure
+    exemple_violation: Une Structure est créée sans Referent, et les demandes expirées n'ont personne à qui être confiées.
