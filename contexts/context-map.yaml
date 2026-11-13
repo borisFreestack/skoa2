@@ -1,0 +1,104 @@
+# Context map du POC skoa — source de vérité des relations entre bounded contexts.
+# Toute communication inter-BC passe par un événement déclaré ici. Une dépendance
+# réelle absente de ce fichier fait échouer la gate « conformité à la context map ».
+# Décision de périmètre : docs/adr/ADR-001-perimetre-poc.md
+
+version: 1
+produit: skoa
+domaine: Entraide entre adhérents d'une structure (coups de main du quotidien)
+reference_design: https://claude.ai/artifact/5U58G3tFfHH3i83KAECtTz  # maquette v0.2
+
+contexts:
+  - id: mise-en-relation
+    nom: Mise en relation
+    type: core
+    dossier: contexts/mise-en-relation
+    mission: Faire qu'une Demande trouve un Preneur sans sur-solliciter ni exposer personne.
+
+  - id: rencontre
+    nom: Rencontre
+    type: core
+    dossier: contexts/rencontre
+    mission: Faire vivre en confiance la Rencontre acceptée, jusqu'au Retour.
+
+  - id: suivi
+    nom: Suivi
+    type: supporting
+    dossier: contexts/suivi
+    mission: Donner au Referent de quoi prendre soin des adhérents de sa Structure.
+
+  - id: identite
+    nom: Identité et comptes
+    type: generic
+    dossier: null  # délégué à Keycloak, non modélisé
+    mission: Authentifier les personnes et fournir un identifiant opaque et un prénom.
+
+relations:
+  - upstream: mise-en-relation
+    downstream: rencontre
+    pattern: customer-supplier
+    published_language: true
+    events:
+      - name: DemandeAcceptee
+        payload: [demandeId, structureId, service, lieuDeRencontre, creneau, demandeurId, preneurId, accepteeLe]
+
+  - upstream: rencontre
+    downstream: mise-en-relation
+    pattern: customer-supplier
+    published_language: true
+    events:
+      - name: DesistementSignale
+        payload: [rencontreId, demandeId, preneurId, signaleLe]
+        effet_aval: la Demande reprend ses vagues, le Preneur désisté est exclu
+      - name: RencontreAnnulee
+        payload: [rencontreId, demandeId, annuleeLe]
+        effet_aval: la Demande est close définitivement
+
+  - upstream: mise-en-relation
+    downstream: suivi
+    pattern: open-host-service
+    downstream_pattern: conformist
+    published_language: true
+    events:
+      - name: DemandeEnvoyee
+        payload: [demandeId, structureId, service, zoneArrondie, envoyeeLe]
+      - name: DemandeAcceptee
+        payload: [demandeId, structureId, service, demandeurId, preneurId, accepteeLe]
+      - name: DemandeExpiree
+        payload: [demandeId, structureId, service, demandeurId, zoneArrondie, expireeLe]
+      - name: AbonnementEnregistre
+        payload: [abonnementId, structureId, adherentId, services]
+      - name: AbonnementMisEnPause
+        payload: [abonnementId, structureId, adherentId]
+      - name: AbonnementRepris
+        payload: [abonnementId, structureId, adherentId]
+      - name: PauseProposee
+        payload: [abonnementId, structureId, adherentId, sollicitationsSansReponse]
+
+  - upstream: rencontre
+    downstream: suivi
+    pattern: open-host-service
+    downstream_pattern: conformist
+    published_language: true
+    events:
+      - name: RetourDonne
+        payload: [rencontreId, structureId, auteurId, ressenti, presence]
+        contrainte: ne contient jamais l'identité de l'autre participant
+      - name: RencontreTerminee
+        payload: [rencontreId, structureId, service, termineeLe]
+
+  - upstream: suivi
+    downstream: mise-en-relation
+    pattern: customer-supplier
+    published_language: true
+    events:
+      - name: StructureCreee
+        payload: [structureId, nomAffiche]
+        effet_aval: catalogue de services et règles d'envoi initialisés avec les valeurs par défaut
+
+  - upstream: identite
+    downstream: [mise-en-relation, rencontre, suivi]
+    pattern: anticorruption-layer
+    published_language: false
+    events: []  # pas d'événement : chaque BC traduit l'identité Keycloak via son ACL
+    note: chaque BC ne manipule qu'un identifiant opaque ; seul rencontre résout le prénom
