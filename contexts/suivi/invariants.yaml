@@ -23,7 +23,7 @@ invariants:
   - id: INV-SUI-005
     regle: Les Indicateurs ne contiennent que des agrégats par Structure et par Periode, sans Message, sans Ressenti nominatif et sans identité d'Adherent.
     agregat: Indicateurs
-    exemple_violation: Le suivi affiche « Léa : 4 retours Bof ce mois-ci ».
+    exemple_violation: "Le suivi affiche « Léa : 4 retours Bof ce mois-ci »."
 
   - id: INV-SUI-006
     regle: L'ActiviteDeLaStructure n'est affichée à l'accueil que si le nombre de RencontreFaite du mois atteint le SeuilAffichageActivite.
