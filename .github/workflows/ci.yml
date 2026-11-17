@@ -13,7 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  backend:
+    name: Backend (Gradle)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -26,5 +27,68 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      # Génère les interfaces et DTO depuis contracts/, compile, teste (dont Spring Modulith verify).
       - name: Build et tests
         run: ./gradlew build
+
+  frontend:
+    name: Frontend (Angular)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      # Chaque script régénère d'abord les clients depuis contracts/.
+      - name: Lint et frontières Sheriff
+        run: npm run lint
+
+      - name: Tests
+        run: npm test -- --watch=false
+
+      - name: Build de production
+        run: npm run build
+
+  contrats:
+    name: Contrat ${{ matrix.bc }} (changements cassants)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        bc: [mise-en-relation, rencontre, suivi]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Contrat présent sur la branche de base ?
+        id: base
+        run: |
+          if git cat-file -e "origin/${{ github.base_ref }}:contracts/${{ matrix.bc }}/openapi.yaml" 2>/dev/null; then
+            echo "existe=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "existe=false" >> "$GITHUB_OUTPUT"
+            echo "Nouveau contrat, rien à comparer." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Comparer au contrat de la branche de base
+        if: steps.base.outputs.existe == 'true'
+        uses: oasdiff/oasdiff-action/breaking@v0
+        with:
+          base: "origin/${{ github.base_ref }}:contracts/${{ matrix.bc }}/openapi.yaml"
+          revision: "HEAD:contracts/${{ matrix.bc }}/openapi.yaml"
+          fail-on: WARN
+          # Aucun contrat ne quitte la CI.
+          review: false
