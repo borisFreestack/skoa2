@@ -156,6 +156,33 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
   - Faire tourner un check en `pull_request_target` ferme une porte et en ouvre une autre : il ne faut jamais y exécuter le code de la PR.
 - **Simplification** : un seul propriétaire pour tout. Avec une équipe, chaque dossier aurait ses propriétaires, et la règle « la dernière ligne qui couvre un chemin l'emporte » compterait.
 
+### 2026-11-17 — Rendre le dépôt public : l'historique publie aussi des métadonnées
+
+- **Fait** : le dépôt est passé en public pour obtenir la protection de branche. Avant de le publier, l'historique a été vérifié : aucun secret ni fichier sensible, mais l'adresse email personnelle figurait comme auteur des 24 commits.
+- **Choix** :
+  - L'historique a été réécrit avec l'adresse noreply GitHub (`git filter-branch`, faute de `git filter-repo` installé), après une sauvegarde complète en bundle. Le contenu des fichiers est identique, mais les SHA ont changé. `main` a été force-pushée avec `--force-with-lease` sur l'ancien SHA distant.
+  - L'adresse noreply est fixée dans la configuration git locale du dépôt, pour qu'elle ne revienne pas au prochain commit.
+  - Alternatives écartées : publier avec l'adresse visible, ou attendre que le réglage soit fait côté GitHub.
+- **Friction** :
+  - La fuite n'était pas dans le code mais dans les métadonnées de commit, qu'aucune gate ne regarde.
+  - `filter-branch` réécrit aussi la référence locale `origin/main`. Il a fallu refaire un fetch pour que `--force-with-lease` compare au vrai état distant.
+  - GitHub peut garder les anciens commits accessibles par SHA tant que son support ne les a pas purgés.
+- **Leçon** : publier est quasi irréversible (cache, indexation, robots). La vérification avant publication porte sur l'historique entier, métadonnées comprises, pas seulement sur l'état courant des fichiers. Une réécriture d'historique est faisable tant que le dépôt n'a qu'un seul clone actif. Après, elle casse le travail des autres.
+- **Simplification** : un seul clone et aucune PR ouverte. Avec une équipe, réécrire `main` imposerait à chacun de recloner.
+
+### 2026-11-17 — Le ruleset de `main` : les gates deviennent des barrières
+
+- **Fait** : un ruleset protège `main`. Il interdit la suppression et le force-push, exige une PR et rend obligatoires sept checks : « Gates DDD », « Backend », « Frontend », « Fichiers protégés » et les trois « Contrat <bc> ». Cette entrée est la première à passer par ce chemin.
+- **Choix** :
+  - Aucune review approuvée exigée et pas de review obligatoire des code owners : GitHub interdit d'approuver sa propre PR, et il n'y a qu'un humain. La validation humaine des fichiers protégés passe par le label, contrôlé par le check « Fichiers protégés ».
+  - Aucune exception de contournement, même pour l'administrateur. Une gate qu'on peut contourner sans trace n'apprend rien. En cas de blocage, on modifie le ruleset, ce qui laisse une trace.
+  - La branche n'a pas besoin d'être à jour avec `main` avant le merge. C'est inutile avec un seul contributeur.
+- **Friction** :
+  - Les checks obligatoires sont identifiés par le nom du job. Renommer un job dans la CI le rend introuvable, et la PR attend alors un check qui n'arrivera jamais. Les jobs en matrice ajoutent un piège : le job « Contrat » s'affiche avec un `${{ matrix.bc }}` littéral quand il est sauté sur un push.
+  - Depuis cette entrée, plus aucun commit ne va directement sur `main`, ni ceux de l'humain, ni ceux de l'agent qui l'assiste.
+- **Leçon** : renommer un job ou un workflow, c'est modifier le contrat du ruleset. C'est une raison de plus pour que `.github/` soit protégé.
+- **Simplification** : un seul humain. Avec une équipe, on exigerait au moins une review approuvée par un code owner, et le label deviendrait inutile pour les humains.
+
 ---
 
 ## Reste à faire en S1 (au 17/11/2026)
@@ -166,7 +193,7 @@ D'après le backlog du cadrage :
 - [x] scripts de gates DDD : conformité à la context map, lint de langage (avec la vérification croisée des `forbidden`), couverture des invariants ;
 - [ ] PIT (mutation testing), ArchUnit ;
 - [ ] tests rejoués sur la branche de base ;
-- [x] fichiers protégés (CODEOWNERS et check de chemins), bloquants seulement une fois la protection de branche disponible ;
+- [x] fichiers protégés (CODEOWNERS et check de chemins), bloquants grâce au ruleset de `main` ;
 - [ ] images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
 
 ## Questions de chaîne à garder en tête
