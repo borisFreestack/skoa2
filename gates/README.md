@@ -29,6 +29,10 @@ Chaque constat tient sur une ligne, `chemin:ligne: ERREUR|AVERTISSEMENT [gate] m
 
 Une PR qui en modifie, supprime ou renomme un échoue au check « Fichiers protégés » (`.github/workflows/fichiers-proteges.yml`, `gates/fichiers_proteges.py`). Pour la débloquer, un propriétaire du fichier pose le label `modification-protegee-validee`. Chaque nouveau commit retire le label, et la PR doit alors être revalidée.
 
+```sh
+gh pr edit <numéro> --add-label modification-protegee-validee   # par un humain propriétaire, jamais par un agent
+```
+
 Le check tourne en `pull_request_target` : c'est la version de la branche de base du workflow, de `CODEOWNERS` et du script qui juge la PR. Une PR ne peut donc pas affaiblir le check qui la juge. Le workflow ne récupère jamais le code de la PR, seulement la liste de ses fichiers, par l'API.
 
 **Ce que le check ne garantit pas seul :**
