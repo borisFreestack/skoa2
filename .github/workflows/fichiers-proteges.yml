@@ -1,0 +1,72 @@
+name: Fichiers protégés
+
+# pull_request_target exécute la version de ce workflow et de gates/ qui est sur la branche
+# de base : une PR ne peut pas affaiblir le check qui la juge.
+# Corollaire de sécurité : on ne récupère JAMAIS le code de la PR ici, seulement la liste
+# de ses fichiers, par l'API.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write  # retirer le label de validation après un nouveau commit
+  issues: read          # savoir qui a posé le label
+
+concurrency:
+  group: fichiers-proteges-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  LABEL: modification-protegee-validee
+  PR: ${{ github.event.pull_request.number }}
+  GH_TOKEN: ${{ github.token }}
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  fichiers-proteges:
+    name: Fichiers protégés
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: gates/.python-version
+
+      # Une validation porte sur un état précis de la PR. Un nouveau commit l'annule.
+      # (Un retrait fait avec github.token ne relance pas ce workflow.)
+      - name: Annuler la validation après un nouveau commit
+        id: annulation
+        if: github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, env.LABEL)
+        run: |
+          gh pr edit "$PR" --remove-label "$LABEL"
+          echo "Nouveau commit : le label $LABEL a été retiré, la modification doit être revalidée." >> "$GITHUB_STEP_SUMMARY"
+          echo "annulee=true" >> "$GITHUB_OUTPUT"
+
+      - name: Fichiers touchés par la PR
+        run: |
+          gh api "repos/$GH_REPO/pulls/$PR/files" --paginate \
+            --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/fichiers.txt"
+          wc -l < "$RUNNER_TEMP/fichiers.txt"
+
+      - name: Qui a validé
+        id: validation
+        if: steps.annulation.outputs.annulee != 'true' && contains(github.event.pull_request.labels.*.name, env.LABEL)
+        run: |
+          login=$(gh api "repos/$GH_REPO/issues/$PR/events" --paginate \
+            --jq ".[] | select(.event == \"labeled\" and .label.name == \"$LABEL\") | .actor.login" | tail -n 1)
+          echo "login=$login" >> "$GITHUB_OUTPUT"
+
+      - name: Vérifier les fichiers protégés
+        env:
+          VALIDE_PAR: ${{ steps.validation.outputs.login }}
+        run: |
+          python gates/fichiers_proteges.py \
+            --codeowners .github/CODEOWNERS \
+            --fichiers "$RUNNER_TEMP/fichiers.txt" \
+            --valide-par "$VALIDE_PAR"

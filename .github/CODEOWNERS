@@ -1,0 +1,26 @@
+# Fichiers protégés de skoa (CLAUDE.md, règle 4).
+#
+# Une PR qui modifie, supprime ou renomme l'un d'eux échoue au check « Fichiers protégés »
+# (.github/workflows/fichiers-proteges.yml) tant qu'un propriétaire n'a pas posé le label
+# « modification-protegee-validee ». Le label est retiré à chaque nouveau commit.
+#
+# Ce fichier est la seule liste : le check la lit sur la branche de base, jamais dans la PR.
+
+# Règles des agents et décisions
+/CLAUDE.md                                @borisFreestack
+/docs/adr/                                @borisFreestack
+
+# Modèle du domaine et contrats publiés
+/contexts/                                @borisFreestack
+/contracts/                               @borisFreestack
+
+# Gates, CI et cette liste elle-même
+/gates/                                   @borisFreestack
+/.github/                                 @borisFreestack
+/backend/src/test/java/org/skoa/*.java    @borisFreestack
+
+# Configuration qui pourrait désactiver une gate (tests, frontières de modules, lint)
+/settings.gradle.kts                      @borisFreestack
+/backend/build.gradle.kts                 @borisFreestack
+/frontend/eslint.config.js                @borisFreestack
+/frontend/sheriff.config.ts               @borisFreestack

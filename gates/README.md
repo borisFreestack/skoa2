@@ -23,6 +23,18 @@ Chaque constat tient sur une ligne, `chemin:ligne: ERREUR|AVERTISSEMENT [gate] m
 
 `artefacts` signale aussi, sans bloquer, un terme défini dans un BC et interdit dans un autre. C'est souvent voulu, mais il vaut mieux le savoir.
 
+## Fichiers protégés
+
+`.github/CODEOWNERS` est la seule liste des fichiers protégés : `contexts/`, `contracts/`, `gates/`, la CI, `CLAUDE.md`, les ADR, et la configuration qui pourrait désactiver une gate.
+
+Une PR qui en modifie, supprime ou renomme un échoue au check « Fichiers protégés » (`.github/workflows/fichiers-proteges.yml`, `gates/fichiers_proteges.py`). Pour la débloquer, un propriétaire du fichier pose le label `modification-protegee-validee`. Chaque nouveau commit retire le label, et la PR doit alors être revalidée.
+
+Le check tourne en `pull_request_target` : c'est la version de la branche de base du workflow, de `CODEOWNERS` et du script qui juge la PR. Une PR ne peut donc pas affaiblir le check qui la juge. Le workflow ne récupère jamais le code de la PR, seulement la liste de ses fichiers, par l'API.
+
+**Ce que le check ne garantit pas seul :**
+- il n'est bloquant que si la protection de branche de `main` exige qu'il passe, ce qu'un dépôt privé sur un compte GitHub gratuit ne permet pas ;
+- il ne distingue un agent d'un humain que par son identité GitHub : un agent qui agirait avec le compte du propriétaire pourrait poser le label lui-même.
+
 ## Conventions que le code doit suivre
 
 - **Événements publiés** : un record par événement, nommé comme dans `contexts/context-map.yaml`, dans `org.skoa.<bc>.evenements`. Ce paquet est déclaré `@NamedInterface("evenements")` dans son `package-info.java`. Les composants du record sont exactement les champs du payload. Un événement interne (non publié) vit ailleurs dans le BC.

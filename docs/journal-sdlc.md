@@ -139,6 +139,23 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
   - Un reviewer non bloquant n'a de valeur que si on compte ce qu'il trouve : commentaires utiles, faux positifs, défauts que les gates n'avaient pas vus. C'est ce compte qui dira, par un nouvel ADR, s'il peut devenir bloquant.
 - **Simplification** : les données sont fictives, ce qui rend acceptable l'envoi du diff chez Mistral. Avec des données réelles, il faudrait un modèle hébergé sur place ou un contrat de traitement des données.
 
+### 2026-11-17 — Protéger les fichiers protégés : CODEOWNERS ne suffit pas
+
+- **Fait** : `.github/CODEOWNERS` liste les fichiers protégés (`contexts/`, `contracts/`, `gates/`, la CI, `CLAUDE.md`, les ADR, la configuration des gates). Un check « Fichiers protégés » fait échouer une PR qui les touche, tant qu'un propriétaire n'a pas posé le label `modification-protegee-validee`. La règle 4 de `CLAUDE.md` renvoie désormais à cette liste.
+- **Choix** :
+  - Le check tourne en `pull_request_target`, donc avec la version de la branche de base. Avec `pull_request`, une PR pourrait modifier le workflow ou le script qui la juge.
+  - La validation passe par un label plutôt que par une review approuvée, pour trois raisons. GitHub interdit d'approuver sa propre PR, ce qui bloquerait les PR du seul humain. `pull_request_target` ne se déclenche pas sur une review. Et un label est le geste déjà prévu pour la Gate 1.
+  - Le label est retiré à chaque nouveau commit : une validation porte sur un état précis de la PR.
+  - La liste n'existe qu'à un endroit, `CODEOWNERS`. Le script la lit au lieu d'en tenir une copie.
+- **Friction** :
+  - Le dépôt est privé, sur un compte GitHub gratuit : ni protection de branche ni rulesets (HTTP 403). CODEOWNERS n'impose donc aucune review, aucun check ne peut être exigé avant le merge, et un push direct sur `main` reste possible. Toutes les gates sont aujourd'hui des signaux, pas des barrières.
+  - Le check ne reconnaît un agent qu'à son identité GitHub. Si un agent pousse avec le compte du propriétaire, il peut poser le label lui-même.
+- **Leçon** :
+  - Une gate n'est bloquante que si la plateforme la rend obligatoire. Le meilleur script ne remplace pas la protection de branche. Cette dépendance à l'offre de l'hébergeur fait partie de l'architecture de la chaîne.
+  - L'identité des agents est un choix de sécurité, pas un détail d'outillage. Elle doit être tranchée avant S2 : un GitHub App ou le `github.token` d'un workflow, jamais le compte du propriétaire.
+  - Faire tourner un check en `pull_request_target` ferme une porte et en ouvre une autre : il ne faut jamais y exécuter le code de la PR.
+- **Simplification** : un seul propriétaire pour tout. Avec une équipe, chaque dossier aurait ses propriétaires, et la règle « la dernière ligne qui couvre un chemin l'emporte » compterait.
+
 ---
 
 ## Reste à faire en S1 (au 17/11/2026)
@@ -148,7 +165,8 @@ D'après le backlog du cadrage :
 - [ ] fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche ;
 - [x] scripts de gates DDD : conformité à la context map, lint de langage (avec la vérification croisée des `forbidden`), couverture des invariants ;
 - [ ] PIT (mutation testing), ArchUnit ;
-- [ ] tests rejoués sur la branche de base, fichiers protégés ;
+- [ ] tests rejoués sur la branche de base ;
+- [x] fichiers protégés (CODEOWNERS et check de chemins), bloquants seulement une fois la protection de branche disponible ;
 - [ ] images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
 
 ## Questions de chaîne à garder en tête

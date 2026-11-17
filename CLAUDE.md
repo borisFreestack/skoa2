@@ -16,7 +16,7 @@ Chaque tâche t'assigne **un seul** bounded context (BC) : `mise-en-relation`, `
 1. **Ne lis ni ne modifie jamais le code d'un autre BC que celui qui t'est assigné.** Tu ne connais les autres BC que par les événements que `contexts/context-map.yaml` déclare pour ton BC.
 2. **N'emploie que les termes du `glossary.yaml` de ton BC**, dans le code (classes, méthodes, variables, tests), les messages de commit et les specs. Un terme listé dans `forbidden` ne doit jamais apparaître.
 3. **Un nouveau terme métier est une proposition d'ajout, jamais un usage direct.** Décris-le (term, definition, forbidden, aggregate) dans la PR ou l'issue et attends sa validation humaine avant de l'employer.
-4. **Les tests validés et tous les fichiers de `contexts/` sont en lecture seule.** Si un test ou un invariant te paraît faux, signale-le ; ne le modifie pas, ne l'affaiblis pas, ne le désactive pas.
+4. **Les tests validés et tous les fichiers listés dans `.github/CODEOWNERS` sont en lecture seule**, notamment `contexts/`, `contracts/`, `gates/` et la CI. Si un test, un invariant ou une gate te paraît faux, signale-le ; ne le modifie pas, ne l'affaiblis pas, ne le désactive pas. Une PR qui touche l'un de ces fichiers échoue au check « Fichiers protégés » tant qu'un humain ne l'a pas validée.
 5. **La communication entre BC passe uniquement par les événements déclarés dans `contexts/context-map.yaml`.** Aucun appel direct, aucun import de l'interne d'un autre BC, aucune table partagée. Un événement nouveau ou modifié est un changement de contrat : il passe par une tâche contrat et par la Gate 1.
 
 ## Vocabulaire interdit partout
