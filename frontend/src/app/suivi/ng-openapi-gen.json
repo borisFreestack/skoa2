@@ -1,0 +1,7 @@
+{
+  "$schema": "../../../node_modules/ng-openapi-gen/ng-openapi-gen-schema.json",
+  "input": "../contracts/suivi/openapi.yaml",
+  "output": "src/app/suivi/api",
+  "ignoreUnusedModels": false,
+  "removeStaleFiles": true
+}

@@ -3,7 +3,7 @@
 Un fichier `openapi.yaml` par bounded context. Chaque fichier est **la source de vérité** de l'API que le BC expose au frontend :
 
 - le backend en génère les interfaces Spring et les DTO (`backend/build/generated/openapi/<bc>`), que ses contrôleurs implémentent ;
-- le frontend en génère le client Angular et les modèles TypeScript (`frontend/projects/<bc>/src/generated`).
+- le frontend en génère le client Angular et les modèles TypeScript (`frontend/src/app/<bc>/api`).
 
 Le code généré n'est pas versionné : il est régénéré à chaque build, donc il ne peut pas diverger du contrat. Une dérive casse la compilation, côté backend comme côté frontend.
 
