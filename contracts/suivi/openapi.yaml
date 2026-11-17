@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: skoa — Suivi
+  description: >-
+    API HTTP publiée par le bounded context « Suivi » pour le frontend.
+    Contrat publié : toute modification passe par une tâche contrat et par la Gate 1.
+    Vocabulaire : contexts/suivi/glossary.yaml uniquement.
+  version: 0.1.0
+servers:
+  - url: /api/suivi
+paths: {}

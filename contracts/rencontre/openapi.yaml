@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: skoa — Rencontre
+  description: >-
+    API HTTP publiée par le bounded context « Rencontre » pour le frontend.
+    Contrat publié : toute modification passe par une tâche contrat et par la Gate 1.
+    Vocabulaire : contexts/rencontre/glossary.yaml uniquement.
+  version: 0.1.0
+servers:
+  - url: /api/rencontre
+paths: {}

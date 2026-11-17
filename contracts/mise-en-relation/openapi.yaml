@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: skoa — Mise en relation
+  description: >-
+    API HTTP publiée par le bounded context « Mise en relation » pour le frontend.
+    Contrat publié : toute modification passe par une tâche contrat et par la Gate 1.
+    Vocabulaire : contexts/mise-en-relation/glossary.yaml uniquement.
+  version: 0.1.0
+servers:
+  - url: /api/mise-en-relation
+paths: {}
