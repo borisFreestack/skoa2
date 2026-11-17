@@ -126,6 +126,19 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
 - **Leçon** : une context map écrite avant le code peut déclarer des choses que l'architecture choisie ne sait pas garantir. À trancher par une tâche contrat : soit deux événements distincts, soit un payload unique assumé.
 - **Simplification** : un seul processus. Avec un broker, on pourrait projeter un payload par consommateur.
 
+### 2026-11-17 — Le reviewer sera Devstral, pas Claude
+
+- **Fait** : l'agent reviewer, prévu en S2, est cadré avant d'être implémenté (ADR-003). Il tournera sur Devstral, par l'API Mistral, depuis GitHub Actions, et ses commentaires ne bloqueront pas la PR.
+- **Choix** : un modèle d'une autre famille que celle de l'agent code, pour ne pas relire avec les mêmes angles morts. Écartés : Claude (angles morts corrélés), OpenRouter (un intermédiaire de plus pour les données), Ollama en local (le modèle tient mal dans 16 Go et la review sortirait de la CI), un verdict bloquant d'emblée (taux de faux positifs inconnu).
+- **Friction** :
+  - Deux écarts au cadrage. La boucle n'est plus mono-fournisseur : l'orchestrateur et les agents tests et code restent sur Claude. Et le « même modèle » de l'expérience A/B devient ambigu : il faut préciser qu'il porte sur l'agent code, le reviewer restant identique dans les deux configurations.
+  - C'est la première sortie volontaire de contenu du dépôt vers un service tiers. Elle applique la règle posée pour oasdiff : on l'a décidée explicitement au lieu de la laisser passer par défaut.
+- **Leçon** :
+  - Le cadrage disait ce que le reviewer voit, pas sur quel modèle il tourne. Pour un agent qui juge d'autres agents, le modèle fait partie de son contexte : il décide de ce qu'il est capable de ne pas voir.
+  - La gate de langage laisse passer un terme métier inventé mais neutre (entrée précédente). Ce cas entre explicitement dans la grille du reviewer, au lieu de rester l'affaire d'une review humaine non écrite.
+  - Un reviewer non bloquant n'a de valeur que si on compte ce qu'il trouve : commentaires utiles, faux positifs, défauts que les gates n'avaient pas vus. C'est ce compte qui dira, par un nouvel ADR, s'il peut devenir bloquant.
+- **Simplification** : les données sont fictives, ce qui rend acceptable l'envoi du diff chez Mistral. Avec des données réelles, il faudrait un modèle hébergé sur place ou un contrat de traitement des données.
+
 ---
 
 ## Reste à faire en S1 (au 17/11/2026)
