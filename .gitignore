@@ -43,3 +43,6 @@ bin/
 .DS_Store
 /.idea/
 /.junie/
+
+### Python ###
+__pycache__/

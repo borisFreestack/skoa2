@@ -99,6 +99,33 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
 - **Leçon** : chaque outil de la chaîne est un canal de sortie potentiel. Les options par défaut sont à lire, pas à supposer.
 - **Simplification** : les données sont fictives. Avec des données réelles, cette vigilance deviendrait une gate.
 
+### 2026-11-17 — Les gates DDD : quatre gates, deux langages
+
+- **Fait** : quatre gates écrites (`gates/README.md`). Trois scripts Python : artefacts de `contexts/`, langage, couverture des invariants. Un test Java : conformité à la context map, qui analyse le bytecode avec Spring Modulith. Un job CI `gates-ddd` lance les scripts ; `./gradlew build` lance le test Java.
+- **Choix** :
+  - Python pour les gates de texte, plutôt que JUnit ou Node. Les rapports tiennent sur une ligne par constat, faciles à relire pour un agent, et un script peut aussi tourner en pre-commit.
+  - Java pour la context map, parce que seules les dépendances compilées disent la vérité.
+  - Couverture des invariants exigée par agrégat : un invariant devient exigible dès que son agrégat est écrit. Les alternatives étaient une gate non bloquante en S1, ou bloquante tout de suite, donc rouge en permanence.
+  - Aucune règle recopiée : le vocabulaire interdit partout est lu dans `CLAUDE.md`, le reste dans `contexts/`.
+- **Friction** :
+  - Les tests des gates ont trouvé deux défauts avant leur première exécution réelle. Les pluriels passaient : « ListeClients » ne contient pas exactement « Client ». Et le nom d'origine d'un import aliasé était jugé à tort.
+  - Faire rougir la gate context map sur du vrai bytecode a révélé un troisième défaut : `package-info` était pris pour un événement.
+  - Le vocabulaire interdit partout n'existait qu'en prose dans `CLAUDE.md`. La gate dépend donc de la forme d'un paragraphe.
+  - Des synonymes refusés (« Minimum », « Date », « Support ») sont aussi des mots-clés techniques. Il a fallu ne juger que les noms qu'on choisit : pas les mots-clés OpenAPI, pas les noms importés d'une bibliothèque.
+- **Leçon** :
+  - Une gate se teste comme du code, et on ne la croit qu'après l'avoir vue rougir. Les tests unitaires des gates sont une étape du job CI, avant les gates elles-mêmes.
+  - Une gate sur le langage n'attrape que les mots qu'on lui a dit d'interdire. Un terme métier inventé mais neutre passe : la règle 3 de `CLAUDE.md` reste l'affaire de la review.
+  - Les conventions que les gates imposent (paquet `evenements`, citation d'un invariant dans le nom d'un test) ne sont écrites que dans `gates/README.md`. Un agent qui ne les connaît pas les découvrira en échouant, et chaque échec lui coûte une de ses trois itérations.
+- **Simplification** : un seul dépôt et un monolithe modulaire. Avec des services séparés, la conformité à la context map ne pourrait plus s'appuyer sur le bytecode : il faudrait vérifier les schémas d'événements publiés.
+
+### 2026-11-17 — Le payload d'un événement partagé est une union
+
+- **Fait** : la context map déclare `DemandeAcceptee` deux fois. Vers `rencontre`, le payload contient le lieu et le créneau ; vers `suivi`, il ne les contient pas. Or, dans le monolithe, un événement est un seul record.
+- **Choix** : la gate exige que le record porte l'union des deux payloads.
+- **Friction** : `suivi` recevra donc `lieuDeRencontre` et `creneau`, que la context map ne lui destine pas. Si cette différence de payload était voulue (pour ne pas exposer de lieu au Suivi), le code ne peut pas la respecter.
+- **Leçon** : une context map écrite avant le code peut déclarer des choses que l'architecture choisie ne sait pas garantir. À trancher par une tâche contrat : soit deux événements distincts, soit un payload unique assumé.
+- **Simplification** : un seul processus. Avec un broker, on pourrait projeter un payload par consommateur.
+
 ---
 
 ## Reste à faire en S1 (au 17/11/2026)
@@ -106,7 +133,7 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
 D'après le backlog du cadrage :
 
 - [ ] fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche ;
-- [ ] scripts de gates DDD : conformité à la context map, lint de langage (avec la vérification croisée des `forbidden`), couverture des invariants ;
+- [x] scripts de gates DDD : conformité à la context map, lint de langage (avec la vérification croisée des `forbidden`), couverture des invariants ;
 - [ ] PIT (mutation testing), ArchUnit ;
 - [ ] tests rejoués sur la branche de base, fichiers protégés ;
 - [ ] images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.

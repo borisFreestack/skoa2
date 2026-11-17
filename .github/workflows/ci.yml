@@ -13,6 +13,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  gates-ddd:
+    name: Gates DDD (artefacts, langage, invariants)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: gates/.python-version
+          cache: pip
+          cache-dependency-path: gates/requirements.txt
+
+      - run: pip install -r gates/requirements.txt
+
+      # Les gates doivent savoir échouer : leurs tests le prouvent avant qu'on les croie.
+      - name: Tests des gates
+        run: python -m unittest discover -s gates/tests -t gates/tests
+
+      - name: Artefacts de contexts/
+        run: python gates/verifier.py artefacts
+
+      - name: Langage (glossaires et vocabulaire interdit)
+        run: python gates/verifier.py langage
+
+      - name: Invariants couverts
+        run: python gates/verifier.py invariants
+
   backend:
     name: Backend (Gradle)
     runs-on: ubuntu-24.04
@@ -27,7 +55,8 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # Génère les interfaces et DTO depuis contracts/, compile, teste (dont Spring Modulith verify).
+      # Génère les interfaces et DTO depuis contracts/, compile, teste (dont Spring Modulith verify
+      # et la gate « conformité à la context map », ContextMapTest).
       - name: Build et tests
         run: ./gradlew build
 

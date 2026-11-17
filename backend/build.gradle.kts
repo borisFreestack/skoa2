@@ -36,6 +36,10 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // Gate « conformité à la context map » (ContextMapTest) : relancée quand la context map change.
+    val racine = rootProject.layout.projectDirectory
+    inputs.file(racine.file("contexts/context-map.yaml")).withPropertyName("contextMap")
+    systemProperty("skoa.racine", racine.asFile.absolutePath)
 }
 
 // Contrats HTTP : contracts/<bc>/openapi.yaml est la source de vérité.
