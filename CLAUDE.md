@@ -24,6 +24,15 @@ Chaque tâche t'assigne **un seul** bounded context (BC) : `mise-en-relation`, `
 `Patient`, `Client`, `Beneficiaire`, `Utilisateur`, `PairAidant`, `PairAidance`, `Aidant`, `Benevole`.
 Le domaine n'emploie ni vocabulaire médical, ni vocabulaire commercial, ni « utilisateur » pour désigner une personne. « Coup de main » est un mot d'interface : dans le domaine, on dit Demande, Rencontre ou Abonnement.
 
+## Gates
+
+Toute PR passe les gates DDD décrites dans `gates/README.md` : artefacts, langage, invariants couverts, conformité à la context map. Lis ce README avant d'écrire du code : il fixe les conventions qu'elles vérifient, notamment :
+- un événement publié est un record de `org.skoa.<bc>.evenements`, dont les champs sont exactement le payload déclaré dans `contexts/context-map.yaml` ;
+- un test qui prouve un invariant porte son identifiant dans son nom affiché (`@DisplayName("INV-MER-005 …")`, `it('INV-MER-005 …')`) ;
+- dès que l'agrégat d'un invariant existe dans ton BC, cet invariant doit être cité par au moins un test.
+
+Lance-les en local avant de pousser : `python3 gates/verifier.py`.
+
 ## Données
 
 Uniquement des données fictives. Aucune donnée de santé, aucun diagnostic, aucune situation personnelle réelle, nulle part : ni dans le code, ni dans les tests, ni dans les fixtures, ni dans les environnements de preview.
