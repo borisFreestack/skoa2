@@ -1,6 +1,6 @@
 # État du projet skoa
 
-Mis à jour : 2026-11-17, en fin de session.
+Mis à jour : 2026-11-18.
 
 Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à chaque fin de session, pas complété : l'historique est dans Git, le vécu dans `docs/journal-sdlc.md`. Les artefacts eux-mêmes font foi : `contexts/`, `docs/adr/`, `CLAUDE.md`, `gates/`.
 
@@ -8,13 +8,13 @@ Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à
 
 ## En une phrase
 
-S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) est à mi-chemin : le squelette, les contrats, la CI, les gates DDD et la protection des fichiers sont en place et bloquants. Il reste PIT, les tests rejoués sur la branche de base, la fonctionnalité de bout en bout, les images et la preview.
+S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) est à mi-chemin : le squelette, les contrats, la CI, les gates DDD, ArchUnit, PIT et la protection des fichiers sont en place et bloquants. Il reste les tests rejoués sur la branche de base, la fonctionnalité de bout en bout, les images et la preview.
 
 ## Les trois objectifs (ADR-002)
 
 1. **Application** : livrer skoa, conforme à la maquette v0.2 et à l'ADR-001.
 2. **Chaîne SDLC AI-native** : apprendre en pratique ce qu'elle coûte et impose. Trace : `docs/journal-sdlc.md`.
-3. **Montée en compétence** : remise à niveau Java / Spring / Angular, découverte de DDD et TDD. Trace : `docs/apprentissage.md`. Cet objectif est ajouté par la PR #3, pas encore fusionnée.
+3. **Montée en compétence** : remise à niveau Java / Spring / Angular, découverte de DDD et TDD. Trace : `docs/apprentissage.md`. Ajouté par la PR #3.
 
 ## Ce qui est en place
 
@@ -26,20 +26,21 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) est à mi-chemi
 | Contrats OpenAPI par BC, code généré à chaque build | `contracts/` | contrats vides (`paths: {}`) |
 | CI : backend, frontend, contrats (oasdiff), gates DDD | `.github/workflows/ci.yml` | vert |
 | Gates DDD : artefacts, langage, invariants (Python), context map (Java) | `gates/`, `backend/src/test/java/org/skoa/ContextMapTest.java` | vertes, chacune vue en échec |
+| Architecture hexagonale : 5 couches par BC (ArchUnit), prouvée sur un faux BC | `backend/src/test/java/org/skoa/Architecture*.java`, `gates/README.md` | verte, chaque règle vue en échec |
+| Mutation testing : PIT sur `domaine` et `application`, seuil 80 % | `backend/build.gradle.kts` | vert (rien à muter), vu en échec à la main |
 | Fichiers protégés : CODEOWNERS + check en `pull_request_target` + label | `.github/CODEOWNERS`, `.github/workflows/fichiers-proteges.yml` | vu en échec et en succès sur GitHub (PR #2) |
 | Dépôt public et ruleset de `main` | GitHub | PR obligatoire, 7 checks obligatoires, aucun contournement |
 
 ## En cours
 
-- **PR #3** (https://github.com/borisFreestack/skoa2/pull/3) : ADR-002 amendé (objectif 3) et `docs/apprentissage.md`. Elle touche `docs/adr/`, donc elle attend le label `modification-protegee-validee` puis le merge.
+- **PIT et ArchUnit** : PR en attente du label `modification-protegee-validee` (elle touche `backend/build.gradle.kts`, la CI, `CODEOWNERS` et `gates/README.md`).
 - **ADR-003** (agent reviewer Devstral via l'API Mistral, non bloquant) : statut « Proposé », questions R1 à R4 ouvertes. Prévu pour S2, ou dès S1 selon R2.
 
 ## Prochaines étapes (ordre du backlog S1)
 
-1. PIT (mutation testing) et ArchUnit.
-2. Gate « tests rejoués sur la branche de base » : un nouveau test doit échouer sans le code qu'il accompagne.
-3. Fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche. Si O4 est tranchée dans ce sens, le porteur du projet l'écrit en partie à la main, en TDD.
-4. Images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
+1. Gate « tests rejoués sur la branche de base » : un nouveau test doit échouer sans le code qu'il accompagne.
+2. Fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche. Si O4 est tranchée dans ce sens, le porteur du projet l'écrit en partie à la main, en TDD.
+3. Images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
 
 ## Décisions à prendre
 
@@ -68,6 +69,7 @@ Q7 (Gradle ou Maven) est tranchée : Gradle.
 | — | Identité GitHub des agents en S2 | GitHub App ou `github.token` d'un workflow, **jamais le compte du propriétaire** |
 | — | Vocabulaire interdit partout lisible par la machine | Aujourd'hui en prose dans `CLAUDE.md`, lu par la gate |
 | — | Méthode de merge | Squash et merge commit tous deux autorisés ; à restreindre au squash si on veut un historique linéaire |
+| — | PIT sur le seul BC modifié, seuil par BC (cœur ou support) | PIT mute tous les BC, seuil unique de 80 % |
 | — | Orchestrateur de S2 | Claude Agent SDK, ou Claude Code headless lancé par la CI (cadrage) |
 
 ## Comment on travaille

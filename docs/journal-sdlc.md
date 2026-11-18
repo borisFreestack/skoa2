@@ -183,15 +183,31 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
 - **Leçon** : renommer un job ou un workflow, c'est modifier le contrat du ruleset. C'est une raison de plus pour que `.github/` soit protégé.
 - **Simplification** : un seul humain. Avec une équipe, on exigerait au moins une review approuvée par un code owner, et le label deviendrait inutile pour les humains.
 
+### 2026-11-18 — PIT et ArchUnit : des gates sur un code qui n'existe pas encore
+
+- **Fait** : deux gates de plus dans `./gradlew build`, donc dans le check obligatoire « Backend ». ArchUnit impose cinq couches par BC (`domaine`, `application`, `adaptateurs`, `evenements`, `api`) et leurs sens de dépendance. PIT mute `domaine` et `application` et exige 80 % de mutants tués.
+- **Choix** :
+  - La convention de paquets est fixée maintenant, avant le premier agrégat : une règle posée après le code se négocie contre l'existant. Elle est écrite dans `gates/README.md`, là où l'agent la lit.
+  - Une règle d'ArchUnit range tout le code d'un BC dans une couche connue. Sans elle, du code métier posé à la racine du BC échapperait à la fois aux règles hexagonales et à PIT, qui ne cible que deux paquets.
+  - Les règles prennent la racine en paramètre, pour être prouvées sur un faux BC (`org.skoa.exemples.architecture`), comme les gates Python sur leurs fixtures. Ce faux BC est ajouté à `CODEOWNERS` : affaiblir l'exemple fautif affaiblirait la preuve.
+  - PIT ne compte que les tests rangés dans un paquet de BC. Les tests des gates, à la racine de `org.skoa`, ne doivent pas tuer de mutants métier.
+  - PIT tourne dans `check`, sans nouveau job CI : un nouveau job n'aurait été bloquant qu'après une modification du ruleset.
+  - PIT 1.30.1 plutôt que 1.30.2, sortie il y a moins de deux semaines.
+- **Friction** :
+  - Sur des BC vides, une gate verte ne prouve rien. ArchUnit refuse par défaut une règle sans classe ; il a fallu l'autoriser explicitement (`allowEmptyShould`), et compter sur le faux BC pour prouver qu'elle mord. PIT, de même, réussit avec « No mutations found » (`failWhenNoMutations = false`).
+  - PIT a été vu en échec à la main, avec une classe et un test temporaires, puis retirés : 33 % sur `km <= rayon` testé par le seul cas `(1, 5)`, 100 % après avoir ajouté la limite. Aucun test automatique ne prouve que la configuration de PIT reste mordante.
+- **Leçon** : une gate se pose avant le code qu'elle juge, mais elle ne se prouve que sur un exemple fautif. Pour une règle statique (ArchUnit), l'exemple fautif peut vivre dans le dépôt ; pour une mesure (PIT), il faut le fabriquer à chaque fois qu'on la change.
+- **Simplification** : PIT mute tous les BC à chaque build, et le seuil est le même pour tous. Le cadrage prévoyait de ne muter que le BC modifié, et l'ADR-001 met plus de soin sur les BC cœur.
+
 ---
 
-## Reste à faire en S1 (au 17/11/2026)
+## Reste à faire en S1 (au 18/11/2026)
 
 D'après le backlog du cadrage :
 
 - [ ] fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche ;
 - [x] scripts de gates DDD : conformité à la context map, lint de langage (avec la vérification croisée des `forbidden`), couverture des invariants ;
-- [ ] PIT (mutation testing), ArchUnit ;
+- [x] PIT (mutation testing), ArchUnit ;
 - [ ] tests rejoués sur la branche de base ;
 - [x] fichiers protégés (CODEOWNERS et check de chemins), bloquants grâce au ruleset de `main` ;
 - [ ] images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.

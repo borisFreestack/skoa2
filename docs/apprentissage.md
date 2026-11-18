@@ -13,7 +13,7 @@ Le statut indique si le concept est **en place** dans le code ou **à venir**. U
 ## Sommaire
 
 1. [DDD stratégique](#1-ddd-stratégique) : bounded context, ubiquitous language, context map
-2. [DDD tactique](#2-ddd-tactique) : agrégat, invariant, événement de domaine, value object
+2. [DDD tactique](#2-ddd-tactique) : agrégat, invariant, événement de domaine, value object, architecture hexagonale
 3. [TDD et qualité des tests](#3-tdd-et-qualité-des-tests)
 4. [Java moderne](#4-java-moderne)
 5. [Spring Boot 4 et Spring Modulith](#5-spring-boot-4-et-spring-modulith)
@@ -90,6 +90,12 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 - **Dans skoa** : les candidats sont `Creneau`, `LieuDeRencontre`, `Rayon` et `Ressenti`. Un record Java est la forme naturelle d'un value object.
 - **Piège** : passer des `String` et des `int` partout (« primitive obsession »). La validation se disperse, et rien n'empêche de passer un rayon à la place d'un plafond.
 
+### Architecture hexagonale (ports et adaptateurs) — règles en place, code à venir
+
+- **Quoi** : le domaine est au centre et ne connaît aucune technique. Il déclare des **ports** (des interfaces : « enregistrer une Demande », « trouver les Abonnements proches ») ; des **adaptateurs** les implémentent avec Spring, une base ou HTTP. Les dépendances pointent toujours vers le domaine, jamais l'inverse.
+- **Dans skoa** : chaque BC range son code en cinq paquets, `domaine`, `application`, `adaptateurs`, `evenements` et `api` (le code généré depuis `contracts/`). Les règles sont dans `backend/src/test/java/org/skoa/ArchitectureHexagonale.java` et décrites dans `gates/README.md`.
+- **Piège** : une annotation Spring ou JPA « juste pour ce champ » dans le domaine. Le domaine ne se teste plus sans démarrer Spring, et chaque changement d'infrastructure touche les règles métier.
+
 ---
 
 ## 3. TDD et qualité des tests
@@ -112,10 +118,11 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 - **Dans skoa** : l'agent tests du cadrage voit « les ports du BC », pas l'implémentation.
 - **Piège** : mocker chaque collaborateur interne. Le moindre refactoring casse des dizaines de tests qui ne protégeaient rien.
 
-### Mutation testing (PIT) — à venir
+### Mutation testing (PIT) — en place
 
 - **Quoi** : l'outil modifie le code (un `>` devient `>=`, un `return true` devient `return false`) et vérifie qu'au moins un test échoue. Un mutant qui survit révèle un test complaisant.
-- **Dans skoa** : prévu en S1 sur le BC modifié. C'est la parade du cadrage contre un agent qui écrirait des tests qui ne vérifient rien.
+- **Dans skoa** : le bloc `pitest` de `backend/build.gradle.kts`. PIT mute les paquets `domaine` et `application` de chaque BC, avec les seuls tests des BC, et fait échouer `./gradlew build` sous 80 % de mutants tués. Le rapport est dans `backend/build/reports/pitest/`. C'est la parade du cadrage contre un agent qui écrirait des tests qui ne vérifient rien.
+- **Exemple vu** : `return km <= rayon` testé par le seul cas `(1, 5)` donne 33 %. Le mutant `<` survit, car 1 < 5 reste vrai. Il faut tester la limite `(5, 5)` et le cas `(6, 5)` pour atteindre 100 %.
 - **Piège** : viser 100 %. Certains mutants sont équivalents (ils ne changent rien d'observable) ; le score sert à repérer les zones faibles, pas à être maximisé.
 
 ---
@@ -227,6 +234,12 @@ Le front est en Angular 22.
 - **Quoi** : le build déclare la version de Java dont il a besoin, et Gradle trouve ou télécharge le JDK correspondant, quel que soit le Java par défaut du poste.
 - **Dans skoa** : `java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }` dans `backend/build.gradle.kts`. Le poste a Java 8 par défaut.
 
+### ArchUnit — en place
+
+- **Quoi** : une bibliothèque qui lit le bytecode compilé et vérifie des règles d'architecture écrites comme des tests JUnit (« les classes de `..domaine..` ne dépendent que de `java..` »).
+- **Dans skoa** : `ArchitectureTest` applique les règles hexagonales au code réel, et `ArchitectureHexagonaleTest` prouve que chacune bloque sur un faux BC (`org.skoa.exemples.architecture`). Spring Modulith s'appuie aussi sur ArchUnit pour `verify()`.
+- **Piège** : une règle qui ne porte sur aucune classe passe sans rien prouver. ArchUnit la refuse par défaut ; ici, `allowEmptyShould(true)` est voulu, tant que les BC sont vides, et c'est le faux BC qui prouve que les règles mordent.
+
 ### Contract-first OpenAPI — en place
 
 - **Quoi** : on écrit d'abord le contrat de l'API, puis on génère le code qui le suit, et non l'inverse.
@@ -248,6 +261,7 @@ Le front est en Angular 22.
 **TDD**
 - Qu'est-ce qu'un test écrit en TDD prouve qu'un test écrit après le code ne prouve pas ?
 - Quelle différence entre une couverture de lignes de 100 % et un score de mutation de 100 % ?
+- Un port du domaine est une interface : où vit-elle, et où vit son implémentation ?
 
 **Java, Spring, Angular**
 - Que vérifie `ApplicationModules.verify()`, et que ne vérifie-t-il pas ?
