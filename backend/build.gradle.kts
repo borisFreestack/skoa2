@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "4.1.2"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.openapi.generator") version "7.27.0"
+    id("info.solidsoft.pitest") version "1.19.0"
 }
 
 group = "org.skoa"
@@ -88,4 +89,23 @@ sourceSets.main {
 
 tasks.compileJava {
     dependsOn(generationDesContrats)
+}
+
+// Gate « qualité réelle des tests » : PIT modifie le code (mutants) et exige qu'un test échoue.
+// On mute ce qui porte les règles métier, le domaine et l'application, avec les seuls tests des BC.
+// ArchitectureTest impose que tout le code d'un BC soit rangé dans une couche connue : rien n'y échappe.
+pitest {
+    pitestVersion = "1.30.1"
+    junit5PluginVersion = "1.2.3"
+    targetClasses = listOf("org.skoa.*.domaine.*", "org.skoa.*.application.*")
+    targetTests = contrats.values.map { "org.skoa.$it.*" }
+    mutationThreshold = 80
+    // Tant qu'aucun BC n'a de code métier, il n'y a rien à muter : ce n'est pas un échec.
+    failWhenNoMutations = false
+    timestampedReports = false
+    outputFormats = listOf("HTML", "XML")
+}
+
+tasks.check {
+    dependsOn(tasks.pitest)
 }

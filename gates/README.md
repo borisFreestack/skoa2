@@ -8,6 +8,8 @@ python3 gates/verifier.py                          # artefacts, langage, invaria
 python3 gates/verifier.py langage                  # une seule gate
 python3 -m unittest discover -s gates/tests -t gates/tests   # les gates savent-elles échouer ?
 ./gradlew :backend:test --tests org.skoa.ContextMapTest      # conformité à la context map
+./gradlew :backend:test --tests 'org.skoa.Architecture*'     # architecture hexagonale
+./gradlew :backend:pitest                                    # mutation testing (aussi lancé par ./gradlew build)
 ```
 
 Chaque constat tient sur une ligne, `chemin:ligne: ERREUR|AVERTISSEMENT [gate] message`. Seules les erreurs font échouer la gate.
@@ -20,8 +22,12 @@ Chaque constat tient sur une ligne, `chemin:ligne: ERREUR|AVERTISSEMENT [gate] m
 | `langage` | `skoa_gates/langage.py` | identifiant Java/TypeScript ou nom de contrat OpenAPI qui contient un terme interdit partout (CLAUDE.md) ou un synonyme refusé du glossaire de son BC |
 | `invariants` | `skoa_gates/invariants.py` | agrégat écrit dont un invariant n'est cité par aucun test du BC ; citation d'un invariant inconnu ou d'un autre BC |
 | conformité à la context map | `backend/src/test/java/org/skoa/ContextMapTest.java` | dépendance entre BC autre qu'un événement déclaré de l'amont vers l'aval ; type non déclaré dans un paquet `evenements` ; événement qui n'est pas un record ou dont les champs diffèrent du payload |
+| architecture hexagonale | `backend/src/test/java/org/skoa/ArchitectureTest.java`, règles dans `ArchitectureHexagonale.java` | domaine qui dépend d'autre chose que du JDK, du domaine et des événements du BC ; application qui dépend d'un adaptateur ou du code généré ; événement publié qui dépend d'autre chose que du JDK ; classe d'un BC hors des cinq couches |
+| qualité réelle des tests | bloc `pitest` de `backend/build.gradle.kts` | score de mutation sous 80 % sur les paquets `domaine` et `application` des BC, avec les seuls tests des BC |
 
 `artefacts` signale aussi, sans bloquer, un terme défini dans un BC et interdit dans un autre. C'est souvent voulu, mais il vaut mieux le savoir.
+
+Comme les gates Python, chaque règle d'architecture est vue en échec : `ArchitectureHexagonaleTest` l'applique à un faux BC (`backend/src/test/java/org/skoa/exemples/architecture/`), avec une classe fautive par règle. PIT a été vu en échec à la main (33 % sur un test qui ne testait pas la limite), pas par un test automatique.
 
 ## Fichiers protégés
 
@@ -42,6 +48,13 @@ Le check tourne en `pull_request_target` : c'est la version de la branche de bas
 ## Conventions que le code doit suivre
 
 - **Événements publiés** : un record par événement, nommé comme dans `contexts/context-map.yaml`, dans `org.skoa.<bc>.evenements`. Ce paquet est déclaré `@NamedInterface("evenements")` dans son `package-info.java`. Les composants du record sont exactement les champs du payload. Un événement interne (non publié) vit ailleurs dans le BC.
+- **Couches d'un BC** : tout le code de `org.skoa.<bc>` est rangé dans l'un de ces paquets (et leurs sous-paquets) :
+  - `domaine` : agrégats, value objects, règles, ports (interfaces). Uniquement le JDK, le domaine et les `evenements` du BC : ni Spring, ni JPA, ni bibliothèque ;
+  - `application` : cas d'usage qui orchestrent le domaine. Spring est permis ; les `adaptateurs` et l'`api` générée sont interdits ;
+  - `adaptateurs` : contrôleurs qui implémentent l'`api` générée, persistance, écouteurs d'événements. Ils implémentent les ports du domaine ;
+  - `evenements` : les événements publiés, records du JDK seul ;
+  - `api` : réservé au code généré depuis `contracts/`.
+- **Mutation testing** : PIT ne mute que `domaine` et `application`, et ne compte que les tests rangés dans un paquet de BC (`org.skoa.<bc>..`). Un test à la racine de `org.skoa` est une gate, pas un test métier.
 - **Citer un invariant** : son identifiant figure dans le nom affiché d'un test du BC, par exemple `@DisplayName("INV-MER-005 …")` ou `it('INV-MER-005 …')`. Un commentaire ne compte pas.
 - **Un invariant devient exigible** dès qu'une classe, un record, une interface ou un enum porte le nom de son agrégat dans `backend/src/main/java/org/skoa/<bc>/` (ADR-002).
 
@@ -61,4 +74,6 @@ Les fichiers analysés sont ceux que git suit ou verrait, hors `.gitignore`. Le 
 - **Le singulier est grossier** (s ou x final retiré au-delà de trois lettres) : il suffit pour « Clients », pas pour « Travaux ».
 - **Les templates Angular (`.html`) et les messages de commit ne sont pas analysés.**
 - **Un agrégat nommé autrement** (`DemandeEntity`) échappe à la gate d'invariants. L'annotation jMolecules `@AggregateRoot`, vérifiée contre les agrégats du glossaire, fermerait ce trou.
+- **PIT ne cible pas encore le BC modifié** : il mute tous les BC à chaque build. Tant que le code est petit, c'est plus simple et assez rapide ; le cadrage prévoit de ne muter que le BC touché par la PR.
+- **Le seuil de mutation est le même pour tous les BC**, alors que `suivi` est un BC de support.
 - **Le payload d'un événement envoyé à plusieurs BC est une union.** `DemandeAcceptee` porte `lieuDeRencontre` et `creneau` pour `rencontre`, donc `suivi` les reçoit aussi, alors que la context map ne les lui déclare pas.

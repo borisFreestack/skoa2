@@ -18,6 +18,7 @@
 /gates/                                   @borisFreestack
 /.github/                                 @borisFreestack
 /backend/src/test/java/org/skoa/*.java    @borisFreestack
+/backend/src/test/java/org/skoa/exemples/ @borisFreestack
 
 # Configuration qui pourrait désactiver une gate (tests, frontières de modules, lint)
 /settings.gradle.kts                      @borisFreestack

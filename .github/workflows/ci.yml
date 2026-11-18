@@ -55,10 +55,20 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # Génère les interfaces et DTO depuis contracts/, compile, teste (dont Spring Modulith verify
-      # et la gate « conformité à la context map », ContextMapTest).
-      - name: Build et tests
+      # Génère les interfaces et DTO depuis contracts/, compile, teste (dont Spring Modulith verify,
+      # la gate « conformité à la context map » et l'architecture hexagonale), puis lance PIT.
+      - name: Build, tests et mutation testing
         run: ./gradlew build
+
+      - name: Rapports de tests et de mutations
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rapports-backend
+          path: |
+            backend/build/reports/tests/
+            backend/build/reports/pitest/
+          retention-days: 7
 
   frontend:
     name: Frontend (Angular)
