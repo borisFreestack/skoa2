@@ -100,10 +100,11 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 
 ## 3. TDD et qualité des tests
 
-### Rouge, vert, refactor — à venir dans le code métier
+### Rouge, vert, refactor — gate en place, code métier à venir
 
 - **Quoi** : on écrit un test qui échoue (rouge), puis le minimum de code pour le faire passer (vert), puis on nettoie sans changer le comportement (refactor). Le test guide le design au lieu de constater après coup.
-- **Dans skoa** : le cadrage prévoit un agent tests qui écrit des tests qui doivent échouer, avant l'agent code. La gate « tests rejoués sur la branche de base » (à venir) prouvera qu'ils étaient bien rouges.
+- **Dans skoa** : le cadrage prévoit un agent tests qui écrit des tests qui doivent échouer, avant l'agent code. La gate « tests rejoués sur la branche de base » (`gates/tests_rejoues.py`) le prouve après coup : elle rejoue chaque nouveau test d'un BC sur la branche de base, sans le code de la PR, et bloque s'il y passe déjà.
+- **Deux sortes de rouge** : le test ne compile pas, parce que la classe ou la méthode n'existe pas encore ; ou le test compile et son assertion échoue, parce que le comportement est absent ou faux. Les deux comptent. Le second est le plus probant : il montre que le test distingue l'ancien comportement du nouveau.
 - **Piège** : écrire le test après le code et le faire passer du premier coup. Un test qu'on n'a jamais vu échouer ne prouve rien.
 
 ### Voir rougir — en place pour les gates

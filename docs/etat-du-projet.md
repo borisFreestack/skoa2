@@ -8,7 +8,7 @@ Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à
 
 ## En une phrase
 
-S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) est à mi-chemin : le squelette, les contrats, la CI, les gates DDD, ArchUnit, PIT et la protection des fichiers sont en place et bloquants. Il reste les tests rejoués sur la branche de base, la fonctionnalité de bout en bout, les images et la preview.
+S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) est à mi-chemin : le squelette, les contrats, la CI, les gates DDD, ArchUnit, PIT, les tests rejoués sur la branche de base et la protection des fichiers sont en place. Il reste la fonctionnalité de bout en bout, les images et la preview.
 
 ## Les trois objectifs (ADR-002)
 
@@ -28,19 +28,19 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) est à mi-chemi
 | Gates DDD : artefacts, langage, invariants (Python), context map (Java) | `gates/`, `backend/src/test/java/org/skoa/ContextMapTest.java` | vertes, chacune vue en échec |
 | Architecture hexagonale : 5 couches par BC (ArchUnit), prouvée sur un faux BC | `backend/src/test/java/org/skoa/Architecture*.java`, `gates/README.md` | verte, chaque règle vue en échec |
 | Mutation testing : PIT sur `domaine` et `application`, seuil 80 % | `backend/build.gradle.kts` | vert (rien à muter), vu en échec à la main |
+| Tests rejoués sur la branche de base : chaque nouveau test de BC doit y échouer | `gates/tests_rejoues.py`, job CI dédié | vue en échec à la main sur trois cas |
 | Fichiers protégés : CODEOWNERS + check en `pull_request_target` + label | `.github/CODEOWNERS`, `.github/workflows/fichiers-proteges.yml` | vu en échec et en succès sur GitHub (PR #2) |
-| Dépôt public et ruleset de `main` | GitHub | PR obligatoire, 7 checks obligatoires, aucun contournement |
+| Dépôt public et ruleset de `main` | GitHub | PR obligatoire, 7 checks obligatoires (8 avec les tests rejoués), aucun contournement |
 
 ## En cours
 
-- **PIT et ArchUnit** : PR en attente du label `modification-protegee-validee` (elle touche `backend/build.gradle.kts`, la CI, `CODEOWNERS` et `gates/README.md`).
+- **Tests rejoués** : PR en attente du label `modification-protegee-validee`, puis le nouveau check est à ajouter au ruleset de `main` pour devenir obligatoire (8 checks).
 - **ADR-003** (agent reviewer Devstral via l'API Mistral, non bloquant) : statut « Proposé », questions R1 à R4 ouvertes. Prévu pour S2, ou dès S1 selon R2.
 
 ## Prochaines étapes (ordre du backlog S1)
 
-1. Gate « tests rejoués sur la branche de base » : un nouveau test doit échouer sans le code qu'il accompagne.
-2. Fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche. Si O4 est tranchée dans ce sens, le porteur du projet l'écrit en partie à la main, en TDD.
-3. Images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
+1. Fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche. Si O4 est tranchée dans ce sens, le porteur du projet l'écrit en partie à la main, en TDD.
+2. Images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
 
 ## Décisions à prendre
 
@@ -69,6 +69,7 @@ Q7 (Gradle ou Maven) est tranchée : Gradle.
 | — | Identité GitHub des agents en S2 | GitHub App ou `github.token` d'un workflow, **jamais le compte du propriétaire** |
 | — | Vocabulaire interdit partout lisible par la machine | Aujourd'hui en prose dans `CLAUDE.md`, lu par la gate |
 | — | Méthode de merge | Squash et merge commit tous deux autorisés ; à restreindre au squash si on veut un historique linéaire |
+| — | Tests rejoués côté Angular (`*.spec.ts`) | Non rejoués : à faire quand le front aura du code de BC |
 | — | PIT sur le seul BC modifié, seuil par BC (cœur ou support) | PIT mute tous les BC, seuil unique de 80 % |
 | — | Orchestrateur de S2 | Claude Agent SDK, ou Claude Code headless lancé par la CI (cadrage) |
 
