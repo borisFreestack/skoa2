@@ -18,6 +18,7 @@ Chaque tâche t'assigne **un seul** bounded context (BC) : `mise-en-relation`, `
 3. **Un nouveau terme métier est une proposition d'ajout, jamais un usage direct.** Décris-le (term, definition, forbidden, aggregate) dans la PR ou l'issue et attends sa validation humaine avant de l'employer.
 4. **Les tests validés et tous les fichiers listés dans `.github/CODEOWNERS` sont en lecture seule**, notamment `contexts/`, `contracts/`, `gates/` et la CI. Si un test, un invariant ou une gate te paraît faux, signale-le ; ne le modifie pas, ne l'affaiblis pas, ne le désactive pas. Une PR qui touche l'un de ces fichiers échoue au check « Fichiers protégés » tant qu'un humain ne l'a pas validée.
 5. **La communication entre BC passe uniquement par les événements déclarés dans `contexts/context-map.yaml`.** Aucun appel direct, aucun import de l'interne d'un autre BC, aucune table partagée. Un événement nouveau ou modifié est un changement de contrat : il passe par une tâche contrat et par la Gate 1.
+6. **Un test que tu ajoutes doit échouer sans le code de ta PR.** Écris-le d'abord et vois-le échouer, par une assertion de préférence, puis écris le code. Un refactoring (même comportement, code réorganisé) n'ajoute aucun test : les tests existants doivent rester verts sans être modifiés. S'il manque un test sur un comportement existant, propose-le dans une PR à part, sans code de production, et signale-le : il passera sur la base, et c'est un humain qui en jugera.
 
 ## Vocabulaire interdit partout
 
@@ -26,12 +27,13 @@ Le domaine n'emploie ni vocabulaire médical, ni vocabulaire commercial, ni « u
 
 ## Gates
 
-Toute PR passe les gates DDD décrites dans `gates/README.md` : artefacts, langage, invariants couverts, conformité à la context map. Lis ce README avant d'écrire du code : il fixe les conventions qu'elles vérifient, notamment :
+Toute PR passe les gates décrites dans `gates/README.md` : artefacts, langage, invariants couverts, conformité à la context map, architecture hexagonale, mutation testing (PIT), tests rejoués sur la branche de base. Lis ce README avant d'écrire du code : il fixe les conventions qu'elles vérifient, notamment :
+- le code d'un BC est rangé dans `domaine`, `application`, `adaptateurs`, `evenements` ou `api` (généré), et le domaine ne dépend ni de Spring ni d'aucune bibliothèque ;
 - un événement publié est un record de `org.skoa.<bc>.evenements`, dont les champs sont exactement le payload déclaré dans `contexts/context-map.yaml` ;
 - un test qui prouve un invariant porte son identifiant dans son nom affiché (`@DisplayName("INV-MER-005 …")`, `it('INV-MER-005 …')`) ;
 - dès que l'agrégat d'un invariant existe dans ton BC, cet invariant doit être cité par au moins un test.
 
-Lance-les en local avant de pousser : `python3 gates/verifier.py`.
+Lance-les en local avant de pousser : `python3 gates/verifier.py`, `./gradlew build` (ArchUnit et PIT compris) et `python3 gates/tests_rejoues.py`.
 
 ## Données
 
