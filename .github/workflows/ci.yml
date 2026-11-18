@@ -70,6 +70,36 @@ jobs:
             backend/build/reports/pitest/
           retention-days: 7
 
+  # Gate « tests écrits d'abord » : chaque nouveau test d'un BC doit échouer sur la branche de base,
+  # sans le code de la PR. Trois passes de tests : la PR, la base, la base avec les tests de la PR.
+  tests-rejoues:
+    name: Tests rejoués sur la branche de base
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: gates/.python-version
+          cache: pip
+          cache-dependency-path: gates/requirements.txt
+
+      - run: pip install -r gates/requirements.txt
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Nouveaux tests rejoués sans le code de la PR
+        run: python gates/tests_rejoues.py --base "origin/${{ github.base_ref }}"
+
   frontend:
     name: Frontend (Angular)
     runs-on: ubuntu-24.04

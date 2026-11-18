@@ -10,6 +10,7 @@ python3 -m unittest discover -s gates/tests -t gates/tests   # les gates savent-
 ./gradlew :backend:test --tests org.skoa.ContextMapTest      # conformité à la context map
 ./gradlew :backend:test --tests 'org.skoa.Architecture*'     # architecture hexagonale
 ./gradlew :backend:pitest                                    # mutation testing (aussi lancé par ./gradlew build)
+python3 gates/tests_rejoues.py --base origin/main            # tests rejoués sur la branche de base (~1 min)
 ```
 
 Chaque constat tient sur une ligne, `chemin:ligne: ERREUR|AVERTISSEMENT [gate] message`. Seules les erreurs font échouer la gate.
@@ -23,6 +24,7 @@ Chaque constat tient sur une ligne, `chemin:ligne: ERREUR|AVERTISSEMENT [gate] m
 | `invariants` | `skoa_gates/invariants.py` | agrégat écrit dont un invariant n'est cité par aucun test du BC ; citation d'un invariant inconnu ou d'un autre BC |
 | conformité à la context map | `backend/src/test/java/org/skoa/ContextMapTest.java` | dépendance entre BC autre qu'un événement déclaré de l'amont vers l'aval ; type non déclaré dans un paquet `evenements` ; événement qui n'est pas un record ou dont les champs diffèrent du payload |
 | architecture hexagonale | `backend/src/test/java/org/skoa/ArchitectureTest.java`, règles dans `ArchitectureHexagonale.java` | domaine qui dépend d'autre chose que du JDK, du domaine et des événements du BC ; application qui dépend d'un adaptateur ou du code généré ; événement publié qui dépend d'autre chose que du JDK ; classe d'un BC hors des cinq couches |
+| tests rejoués sur la branche de base | `tests_rejoues.py`, job « Tests rejoués sur la branche de base » | nouveau test d'un BC qui passe, ou est ignoré, sur la branche de base, sans le code de la PR : il ne prouve rien de ce code |
 | qualité réelle des tests | bloc `pitest` de `backend/build.gradle.kts` | score de mutation sous 80 % sur les paquets `domaine` et `application` des BC, avec les seuls tests des BC |
 
 `artefacts` signale aussi, sans bloquer, un terme défini dans un BC et interdit dans un autre. C'est souvent voulu, mais il vaut mieux le savoir.
@@ -55,6 +57,7 @@ Le check tourne en `pull_request_target` : c'est la version de la branche de bas
   - `evenements` : les événements publiés, records du JDK seul ;
   - `api` : réservé au code généré depuis `contracts/`.
 - **Mutation testing** : PIT ne mute que `domaine` et `application`, et ne compte que les tests rangés dans un paquet de BC (`org.skoa.<bc>..`). Un test à la racine de `org.skoa` est une gate, pas un test métier.
+- **Test nouveau** : une méthode de test (classe et nom affiché) d'un paquet de BC qui n'existait pas sur la branche de base. Renommer un test ou changer son `@DisplayName` en fait un test nouveau, qui doit alors échouer sur la base. Un test existant qu'on modifie n'est pas rejugé.
 - **Citer un invariant** : son identifiant figure dans le nom affiché d'un test du BC, par exemple `@DisplayName("INV-MER-005 …")` ou `it('INV-MER-005 …')`. Un commentaire ne compte pas.
 - **Un invariant devient exigible** dès qu'une classe, un record, une interface ou un enum porte le nom de son agrégat dans `backend/src/main/java/org/skoa/<bc>/` (ADR-002).
 
@@ -74,6 +77,9 @@ Les fichiers analysés sont ceux que git suit ou verrait, hors `.gitignore`. Le 
 - **Le singulier est grossier** (s ou x final retiré au-delà de trois lettres) : il suffit pour « Clients », pas pour « Travaux ».
 - **Les templates Angular (`.html`) et les messages de commit ne sont pas analysés.**
 - **Un agrégat nommé autrement** (`DemandeEntity`) échappe à la gate d'invariants. L'annotation jMolecules `@AggregateRoot`, vérifiée contre les agrégats du glossaire, fermerait ce trou.
+- **Un test qui ne compile pas sur la base compte comme rouge.** C'est le premier rouge habituel du TDD, mais un test qui appelle une classe nouvelle sans rien vérifier passe la gate. C'est alors PIT qui le rattrape, à condition que le code soit dans `domaine` ou `application`.
+- **Si un seul nouveau test ne compile pas sur la base, tous les nouveaux tests sont comptés rouges** : la compilation est tout ou rien.
+- **Seuls les tests backend des BC sont rejoués.** Les tests Angular (`*.spec.ts`) et les tests des gates ne le sont pas.
 - **PIT ne cible pas encore le BC modifié** : il mute tous les BC à chaque build. Tant que le code est petit, c'est plus simple et assez rapide ; le cadrage prévoit de ne muter que le BC touché par la PR.
 - **Le seuil de mutation est le même pour tous les BC**, alors que `suivi` est un BC de support.
 - **Le payload d'un événement envoyé à plusieurs BC est une union.** `DemandeAcceptee` porte `lieuDeRencontre` et `creneau` pour `rencontre`, donc `suivi` les reçoit aussi, alors que la context map ne les lui déclare pas.

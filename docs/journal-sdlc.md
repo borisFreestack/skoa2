@@ -199,6 +199,22 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
 - **Leçon** : une gate se pose avant le code qu'elle juge, mais elle ne se prouve que sur un exemple fautif. Pour une règle statique (ArchUnit), l'exemple fautif peut vivre dans le dépôt ; pour une mesure (PIT), il faut le fabriquer à chaque fois qu'on la change.
 - **Simplification** : PIT mute tous les BC à chaque build, et le seuil est le même pour tous. Le cadrage prévoyait de ne muter que le BC modifié, et l'ADR-001 met plus de soin sur les BC cœur.
 
+### 2026-11-18 — Tests rejoués sur la branche de base : prouver le rouge après coup
+
+- **Fait** : la gate `gates/tests_rejoues.py` et son job CI. Pour une PR qui touche les tests d'un BC, elle lance trois passes : les tests de la PR, ceux de la base, puis ceux de la base avec les tests de la PR recopiés. Chaque test présent dans la PR et absent de la base doit échouer à la troisième passe.
+- **Choix** :
+  - Le jugement porte sur la méthode de test, pas sur le fichier : un fichier modifié garde ses anciens tests verts, seuls les nouveaux doivent être rouges. L'identité d'un test est sa classe et son nom affiché, lus dans les rapports JUnit XML de Gradle.
+  - Les tests sont exécutés, pas analysés. Une analyse statique devinerait ce qu'un test couvre ; l'exécution le constate.
+  - Un test qui ne compile pas sans le code de la PR compte comme rouge. C'est le rouge le plus fréquent du TDD, celui de la classe qui n'existe pas encore. Le refuser obligerait à commiter des squelettes vides avant chaque test.
+  - Seuls les tests rangés dans un BC sont jugés. Un test de gate accompagne du code de test (règles, exemples fautifs) et passe donc forcément sur la base, avec ses exemples recopiés.
+  - La base est le point où la PR a quitté `main` (`merge-base`), dans un worktree temporaire. Le script recopie les tests depuis l'arbre de travail, pas depuis le dernier commit : en local, on peut le lancer avant de commiter.
+  - Un job à part plutôt qu'une étape du job « Backend » : la gate ne tourne que sur une PR, et ses trois passes ralentiraient tous les builds. Elle n'est bloquante qu'une fois ajoutée aux checks obligatoires du ruleset.
+- **Friction** :
+  - Le premier essai d'un « rouge par assertion » a pris la mauvaise base. Une branche tirée de `main` ne quitte pas une base fabriquée à côté. La sémantique du `merge-base` est juste pour une PR, mais déroutante pour une démonstration.
+  - Vue en échec sur trois cas fabriqués puis retirés : un test qui vérifie `2 + 2 = 4` est bloqué ; une classe nouvelle avec son test passe (rouge par compilation) ; un défaut `>` corrigé en `>=` avec un test à la limite passe (rouge par assertion). Comme pour PIT, aucun test automatique ne rejoue ces trois cas ; `gates/tests/test_tests_rejoues.py` ne couvre que le jugement.
+- **Leçon** : le TDD ne laisse aucune trace dans le résultat final. Un test écrit avant le code et un test écrit après se ressemblent. La seule preuve possible est de rejouer le test sans le code. Elle ne dit pas que le test a été écrit en premier, seulement qu'il aurait pu échouer, et c'est ce qui compte pour la qualité.
+- **Simplification** : un seul runner rejoue tout le backend trois fois, soit environ une minute aujourd'hui. Avec beaucoup de tests, il faudrait ne rejouer que les classes touchées.
+
 ---
 
 ## Reste à faire en S1 (au 18/11/2026)
@@ -208,7 +224,7 @@ D'après le backlog du cadrage :
 - [ ] fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche ;
 - [x] scripts de gates DDD : conformité à la context map, lint de langage (avec la vérification croisée des `forbidden`), couverture des invariants ;
 - [x] PIT (mutation testing), ArchUnit ;
-- [ ] tests rejoués sur la branche de base ;
+- [x] tests rejoués sur la branche de base ;
 - [x] fichiers protégés (CODEOWNERS et check de chemins), bloquants grâce au ruleset de `main` ;
 - [ ] images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
 

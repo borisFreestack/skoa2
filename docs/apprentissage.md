@@ -100,10 +100,11 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 
 ## 3. TDD et qualité des tests
 
-### Rouge, vert, refactor — à venir dans le code métier
+### Rouge, vert, refactor — gate en place, code métier à venir
 
 - **Quoi** : on écrit un test qui échoue (rouge), puis le minimum de code pour le faire passer (vert), puis on nettoie sans changer le comportement (refactor). Le test guide le design au lieu de constater après coup.
-- **Dans skoa** : le cadrage prévoit un agent tests qui écrit des tests qui doivent échouer, avant l'agent code. La gate « tests rejoués sur la branche de base » (à venir) prouvera qu'ils étaient bien rouges.
+- **Dans skoa** : le cadrage prévoit un agent tests qui écrit des tests qui doivent échouer, avant l'agent code. La gate « tests rejoués sur la branche de base » (`gates/tests_rejoues.py`) le prouve après coup : elle rejoue chaque nouveau test d'un BC sur la branche de base, sans le code de la PR, et bloque s'il y passe déjà.
+- **Deux sortes de rouge** : le test ne compile pas, parce que la classe ou la méthode n'existe pas encore ; ou le test compile et son assertion échoue, parce que le comportement est absent ou faux. Les deux comptent. Le second est le plus probant : il montre que le test distingue l'ancien comportement du nouveau.
 - **Piège** : écrire le test après le code et le faire passer du premier coup. Un test qu'on n'a jamais vu échouer ne prouve rien.
 
 ### Voir rougir — en place pour les gates
@@ -111,6 +112,15 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 - **Quoi** : avant de faire confiance à un test ou à une gate, on la voit échouer sur un cas fautif.
 - **Dans skoa** : `gates/tests/` et `ConformiteContextMapTest.java` prouvent que chaque gate bloque. La PR #2 a fait échouer « Fichiers protégés » sur GitHub, puis l'a fait passer, puis échouer de nouveau. Les gates n'ont pas été écrites en TDD strict (le code avant les tests), mais ce sont leurs tests qui ont trouvé les défauts des pluriels et des alias.
 - **Piège** : se rassurer avec une gate verte qui n'a jamais rien eu à bloquer.
+
+### Tests rejoués sur la branche de base (fail-to-pass) — en place
+
+- **Quoi** : on rejoue chaque nouveau test sans le code qu'il accompagne ; il doit échouer. C'est l'automatisation d'une vieille question de revue : « as-tu vérifié que ton test échoue sans ta correction ? ». À la main, on annule la correction, on lance le test (rouge attendu), puis on remet la correction (vert).
+- **D'où ça vient** : ce n'est pas une méthode établie sous un nom précis. Le benchmark SWE-bench, qui évalue les agents de code sur de vrais bugs GitHub, la formalise. Il range les tests en **FAIL_TO_PASS** (rouges avant la correction, verts après : ils prouvent qu'elle fait quelque chose) et en **PASS_TO_PASS** (verts avant et après : ils prouvent qu'on n'a rien cassé). Un nouveau test vert avant et vert après ne prouve rien de la correction.
+- **Dans skoa** : `gates/tests_rejoues.py` et le job « Tests rejoués sur la branche de base ». La règle 6 de `CLAUDE.md` en tire la conduite d'un agent : un refactoring n'ajoute pas de test, et un test qui manque sur un comportement existant passe par une PR à part.
+- **Parenté avec PIT** : les deux posent la question « si le code était différent, le test le verrait-il ? ». PIT change des détails (un `>=` devient `>`) ; les tests rejoués retirent toute la PR. Ils forment comme un seul mutant, énorme : « la PR n'existe pas ».
+- **Ce que ça prouve** : le test aurait pu échouer, il distingue le code d'avant de celui d'après. Ça ne prouve ni qu'il a été écrit en premier, ni qu'il vérifie bien (un test qui ne compile pas sans la nouvelle classe compte comme rouge, même s'il n'affirme rien). PIT rattrape ce second cas.
+- **Piège** : ajouter un test pendant un refactoring « pour être sûr ». Il passe sur la base, et la gate le bloque à juste titre : il ne prouve rien du refactoring.
 
 ### Tester le comportement aux ports — à venir
 
@@ -262,6 +272,7 @@ Le front est en Angular 22.
 - Qu'est-ce qu'un test écrit en TDD prouve qu'un test écrit après le code ne prouve pas ?
 - Quelle différence entre une couverture de lignes de 100 % et un score de mutation de 100 % ?
 - Un port du domaine est une interface : où vit-elle, et où vit son implémentation ?
+- Pourquoi un test ajouté pendant un refactoring est-il bloqué par la gate des tests rejoués, et où doit-il aller ?
 
 **Java, Spring, Angular**
 - Que vérifie `ApplicationModules.verify()`, et que ne vérifie-t-il pas ?
