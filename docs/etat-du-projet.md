@@ -8,7 +8,7 @@ Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à
 
 ## En une phrase
 
-S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses gates de qualité : squelette, contrats, CI, gates DDD, ArchUnit, PIT, tests rejoués sur la branche de base, protection des fichiers. Il reste la fonctionnalité de bout en bout, puis les images et la preview. Q4 est tranchée (ADR-004) et l'identité se fera sans Keycloak (ADR-005). Le prochain pas est de trancher O4, puis le premier code métier.
+S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses gates de qualité : squelette, contrats, CI, gates DDD, ArchUnit, PIT, tests rejoués sur la branche de base, protection des fichiers. Il reste la fonctionnalité de bout en bout, puis les images et la preview. Q4 est tranchée (ADR-004) et l'identité se fera sans Keycloak (ADR-005). Le modèle correspondant est sur `main` (PR #8, mergée le 23/11). Il n'y a encore aucun code métier. Le prochain pas est de trancher O4, puis d'écrire ce premier code.
 
 ## Les trois objectifs (ADR-002)
 
@@ -20,7 +20,7 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses ga
 
 | Brique | Où | État |
 |---|---|---|
-| Modèle du domaine : 3 BC, glossaires, invariants, context map | `contexts/` | stable depuis S0 |
+| Modèle du domaine : 3 BC, glossaires, invariants, context map | `contexts/` | complété le 23/11 : `Adhesion` dans `suivi`, deux événements vers `mise-en-relation`, plus de Keycloak |
 | Backend Spring Boot 4.1 + Spring Modulith 2.1, un module par BC | `backend/` | squelette vide, sans code métier |
 | Frontend Angular 22, zoneless, Vitest, un module Sheriff par BC | `frontend/` | squelette vide |
 | Contrats OpenAPI par BC, code généré à chaque build | `contracts/` | contrats vides (`paths: {}`) |
@@ -34,6 +34,7 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses ga
 
 ## En cours
 
+- **Point d'arrêt du 23/11** : aucune tâche commencée. À la reprise, répondre à O4.
 - **ADR-003** (agent reviewer Devstral via l'API Mistral, non bloquant) : statut « Proposé », questions R1 à R4 ouvertes. Prévu pour S2, ou dès S1 selon R2.
 
 ## Prochaines étapes (ordre du backlog S1)
@@ -69,7 +70,7 @@ Q4 (adhésions) est tranchée : dans `suivi`, ADR-004. Q7 (Gradle ou Maven) est 
 | O1 | Les livrables « montrables » restent-ils des objectifs ? | Sous-produits de l'apprentissage |
 | O2 | Refaire une partie de S1 à la main ? | Non, l'écart est noté au journal |
 | O3 | Le reviewer lit-il le journal ? | Non tranché |
-| O4 | Où le porteur du projet code-t-il lui-même ? | Piste : l'agrégat `Demande` en TDD en S1 |
+| O4 | Où le porteur du projet code-t-il lui-même ? | Piste de départ : l'agrégat `Demande` en TDD. Proposé le 23/11, sans réponse : commencer par `Adhesion` (un seul invariant, INV-SUI-008), puis `Demande` |
 | — | Identité GitHub des agents en S2 | GitHub App ou `github.token` d'un workflow, **jamais le compte du propriétaire** |
 | — | Vocabulaire interdit partout lisible par la machine | Aujourd'hui en prose dans `CLAUDE.md`, lu par la gate |
 | — | Méthode de merge | Squash et merge commit tous deux autorisés ; à restreindre au squash si on veut un historique linéaire |
