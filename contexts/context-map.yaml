@@ -25,13 +25,13 @@ contexts:
     nom: Suivi
     type: supporting
     dossier: contexts/suivi
-    mission: Donner au Referent de quoi prendre soin des adhérents de sa Structure.
+    mission: Tenir la Structure et ses Adhesions, et donner au Referent de quoi prendre soin de ses adhérents.
 
   - id: identite
     nom: Identité et comptes
     type: generic
-    dossier: null  # délégué à Keycloak, non modélisé
-    mission: Authentifier les personnes et fournir un identifiant opaque et un prénom.
+    dossier: null  # application séparée, non modélisée (ADR-005)
+    mission: Authentifier les personnes et fournir un identifiant opaque, un prénom et un email.
 
 relations:
   - upstream: mise-en-relation
@@ -95,10 +95,16 @@ relations:
       - name: StructureCreee
         payload: [structureId, nomAffiche]
         effet_aval: catalogue de services et règles d'envoi initialisés avec les valeurs par défaut
+      - name: AdhesionEnregistree
+        payload: [adhesionId, structureId, adherentId, enregistreeLe]
+        effet_aval: la personne peut envoyer une Demande et tenir un Abonnement dans cette Structure
+      - name: AdhesionTerminee
+        payload: [adhesionId, structureId, adherentId, termineeLe]
+        effet_aval: son Abonnement est supprimé, ses Demandes sans Preneur sont annulées, elle n'est plus sollicitée
 
   - upstream: identite
     downstream: [mise-en-relation, rencontre, suivi]
     pattern: anticorruption-layer
     published_language: false
-    events: []  # pas d'événement : chaque BC traduit l'identité Keycloak via son ACL
-    note: chaque BC ne manipule qu'un identifiant opaque ; seul rencontre résout le prénom
+    events: []  # pas d'événement : chaque BC traduit l'identité via son ACL
+    note: chaque BC ne manipule qu'un identifiant opaque ; rencontre résout le prénom, suivi le prénom et l'email pour le seul Referent de la Structure ; mise-en-relation ne résout rien

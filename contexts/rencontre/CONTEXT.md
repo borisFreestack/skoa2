@@ -6,7 +6,7 @@ Chaque Participant peut s'en retirer à tout moment sans se justifier, et ce qu'
 
 ## Responsabilités
 - Ouvrir une Rencontre à la réception de `DemandeAcceptee`, avec ses deux Participants : le Demandeur et le Preneur.
-- Révéler le Prenom de chaque Participant à l'autre, et seulement à lui (traduction de l'identité Keycloak par l'ACL).
+- Révéler le Prenom de chaque Participant à l'autre, et seulement à lui (traduction de l'identité par l'ACL).
 - Gérer les PropositionDHeure dans le Creneau de la Demande jusqu'à une HeureConvenue.
 - Porter les Messages entre les deux Participants.
 - Enregistrer une Annulation (par le Demandeur) ou un Desistement (par le Preneur), sans motif obligatoire.

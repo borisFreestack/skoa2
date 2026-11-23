@@ -1,6 +1,6 @@
 # État du projet skoa
 
-Mis à jour : 2026-11-18, en fin de session.
+Mis à jour : 2026-11-23.
 
 Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à chaque fin de session, pas complété : l'historique est dans Git, le vécu dans `docs/journal-sdlc.md`. Les artefacts eux-mêmes font foi : `contexts/`, `docs/adr/`, `CLAUDE.md`, `gates/`.
 
@@ -8,7 +8,7 @@ Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à
 
 ## En une phrase
 
-S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses gates de qualité : squelette, contrats, CI, gates DDD, ArchUnit, PIT, tests rejoués sur la branche de base, protection des fichiers. Il reste la fonctionnalité de bout en bout, puis les images et la preview. Le prochain pas est une décision de domaine (Q4), pas du code.
+S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses gates de qualité : squelette, contrats, CI, gates DDD, ArchUnit, PIT, tests rejoués sur la branche de base, protection des fichiers. Il reste la fonctionnalité de bout en bout, puis les images et la preview. Q4 est tranchée (ADR-004) et l'identité se fera sans Keycloak (ADR-005). Le prochain pas est de trancher O4, puis le premier code métier.
 
 ## Les trois objectifs (ADR-002)
 
@@ -28,23 +28,20 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses ga
 | Gates DDD : artefacts, langage, invariants (Python), context map (Java) | `gates/`, `backend/src/test/java/org/skoa/ContextMapTest.java` | vertes, chacune vue en échec |
 | Architecture hexagonale : 5 couches par BC (ArchUnit), prouvée sur un faux BC | `backend/src/test/java/org/skoa/Architecture*.java`, `gates/README.md` | verte, chaque règle vue en échec |
 | Mutation testing : PIT sur `domaine` et `application`, seuil 80 % | `backend/build.gradle.kts` | vert (rien à muter), vu en échec à la main |
-| Tests rejoués sur la branche de base : chaque nouveau test de BC doit y échouer | `gates/tests_rejoues.py`, job CI dédié, règle 6 de `CLAUDE.md` | vue en échec à la main sur trois cas ; **pas encore obligatoire** (voir « En cours ») |
+| Tests rejoués sur la branche de base : chaque nouveau test de BC doit y échouer | `gates/tests_rejoues.py`, job CI dédié, règle 6 de `CLAUDE.md` | vue en échec à la main sur trois cas ; obligatoire depuis le 23/11 |
 | Fichiers protégés : CODEOWNERS + check en `pull_request_target` + label | `.github/CODEOWNERS`, `.github/workflows/fichiers-proteges.yml` | vu en échec et en succès sur GitHub (PR #2) |
-| Dépôt public et ruleset de `main` | GitHub | PR obligatoire, 7 checks obligatoires, aucun contournement |
+| Dépôt public et ruleset de `main` | GitHub | PR obligatoire, 8 checks obligatoires, aucun contournement |
 
 ## En cours
 
-- **Ruleset de `main`** : le 18/11 en fin de session, il n'exige encore que 7 checks, sans « Tests rejoués sur la branche de base ». La mise à jour n'a pas pris. À vérifier, puis à refaire :
-  ```sh
-  gh api repos/borisFreestack/skoa2/rulesets/27450136 --jq '[.rules[]|select(.type=="required_status_checks").parameters.required_status_checks[].context]'
-  ```
 - **ADR-003** (agent reviewer Devstral via l'API Mistral, non bloquant) : statut « Proposé », questions R1 à R4 ouvertes. Prévu pour S2, ou dès S1 selon R2.
 
 ## Prochaines étapes (ordre du backlog S1)
 
-1. Trancher Q4 (où vivent les adhésions) et O4 (où le porteur du projet code lui-même) : les deux conditionnent l'étape suivante.
-2. Fonctionnalité de bout en bout : s'abonner à un service et recevoir une Sollicitation pour une Demande proche. Si O4 est tranchée dans ce sens, le porteur du projet l'écrit en partie à la main, en TDD. Premier code métier : les gates d'invariants, d'architecture, PIT et tests rejoués jugeront enfin du vrai code.
-3. Images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
+1. Trancher O4 (où le porteur du projet code lui-même) : elle conditionne l'étape suivante.
+2. Fonctionnalité de bout en bout : enregistrer une Adhesion (`suivi`), puis s'abonner à un service et recevoir une Sollicitation pour une Demande proche (`mise-en-relation`), avec des identifiants fictifs fixes. Si O4 est tranchée dans ce sens, le porteur du projet l'écrit en partie à la main, en TDD. Premier code métier : les gates d'invariants, d'architecture, PIT et tests rejoués jugeront enfin du vrai code.
+3. `identite`, serveur d'autorisation Spring en application séparée (ADR-005).
+4. Images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
 
 ## Décisions à prendre
 
@@ -52,15 +49,18 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses ga
 
 | # | Question | Hypothèse actuelle |
 |---|---|---|
-| Q1 | Un adhérent peut-il appartenir à plusieurs structures ? | Cloisonnement par Structure, règle d'appartenance non définie |
+| Q1 | Un adhérent peut-il appartenir à plusieurs structures ? | Permis par le modèle, une seule à l'écran (A4 de l'ADR-004) |
 | Q2 | Le Retour est-il donné par les deux participants ? | Un Retour par participant |
 | Q3 | L'heure se convient-elle seulement après l'acceptation ? | Oui, dans `rencontre` |
-| Q4 | Où vivent les adhésions ? | Nulle part : trou de modélisation, **prioritaire** |
 | Q5 | Faut-il mettre à jour `docs/cadrage-poc.md` ? | Non, l'ADR-001 prime |
 | Q6 | Corriger les écarts de vocabulaire de la maquette ? | À corriger, pas encore fait |
 | — | `DemandeAcceptee` a deux payloads différents (vers `rencontre` et vers `suivi`), mais un seul record en Java | La gate exige l'union. Tâche contrat à ouvrir : deux événements, ou un payload unique assumé |
+| A5 | Une Rencontre en cours survit-elle au départ d'un Participant ? | Oui |
+| A6 | `ModulesTest` refuse les cycles que la context map déclare | Les tolérer s'ils sont déclarés, **avant le premier écouteur dans `suivi`** |
+| A8 | Publier `ReferentDesigne` vers `mise-en-relation` ? | Oui, par une tâche contrat |
+| I1 à I4 | Questions d'identité | Voir ADR-005 |
 
-Q7 (Gradle ou Maven) est tranchée : Gradle.
+Q4 (adhésions) est tranchée : dans `suivi`, ADR-004. Q7 (Gradle ou Maven) est tranchée : Gradle.
 
 ### Projet et chaîne
 
@@ -96,7 +96,7 @@ Q7 (Gradle ou Maven) est tranchée : Gradle.
 
 Lire, dans l'ordre :
 1. ce fichier ;
-2. `docs/adr/ADR-002-objectifs-du-projet.md`, puis ADR-001 et ADR-003 ;
+2. `docs/adr/ADR-002-objectifs-du-projet.md`, puis ADR-001, ADR-003, ADR-004 et ADR-005 ;
 3. la fin de `docs/journal-sdlc.md` ;
 4. `CLAUDE.md` et `gates/README.md` ;
 5. `contexts/context-map.yaml` et le `CONTEXT.md` du BC concerné.

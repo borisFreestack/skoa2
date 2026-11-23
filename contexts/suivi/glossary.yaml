@@ -29,9 +29,14 @@ terms:
     aggregate: Structure
 
   - term: Adherent
-    definition: Personne membre d'une Structure, connue ici seulement par ses événements et ses ElementATraiter.
+    definition: Personne dont l'Adhesion à une Structure est en cours.
     forbidden: [Utilisateur, Membre, Client, Beneficiaire, Patient, Usager]
     aggregate: null
+
+  - term: Adhesion
+    definition: Appartenance d'un Adherent à une Structure, depuis son enregistrement jusqu'à sa fin.
+    forbidden: [Inscription, Affiliation, Membre, Compte]
+    aggregate: Adhesion
 
   - term: AdherentConcerne
     definition: Seul Adherent nommé par un ElementATraiter, celui que le Referent doit recontacter.

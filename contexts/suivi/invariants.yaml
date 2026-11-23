@@ -34,3 +34,8 @@ invariants:
     regle: Une Structure a exactement un Referent et un TelephoneDeLaStructure à tout moment.
     agregat: Structure
     exemple_violation: Une Structure est créée sans Referent, et les demandes expirées n'ont personne à qui être confiées.
+
+  - id: INV-SUI-008
+    regle: Un Adherent a au plus une Adhesion en cours dans une même Structure.
+    agregat: Adhesion
+    exemple_violation: Nadia enregistre Camille deux fois chez AgoraFolks, et deux Adhesions de Camille y sont en cours.

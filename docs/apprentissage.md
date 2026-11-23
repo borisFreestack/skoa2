@@ -49,7 +49,7 @@ Le DDD stratégique découpe le domaine et fixe le langage, avant toute ligne de
 | Customer-supplier | l'amont fournit ce dont l'aval a besoin, et ils négocient le contrat | `mise-en-relation` → `rencontre` (`DemandeAcceptee`) |
 | Open-host service | l'amont publie un contrat stable et ouvert à tous | `mise-en-relation` et `rencontre` vers `suivi` |
 | Conformist | l'aval prend le modèle de l'amont tel quel, sans le traduire | `suivi` |
-| Anticorruption layer (ACL) | l'aval traduit le modèle externe dans le sien pour ne pas être contaminé | chaque BC traduit l'identité Keycloak |
+| Anticorruption layer (ACL) | l'aval traduit le modèle externe dans le sien pour ne pas être contaminé | chaque BC traduit l'identité fournie par `identite` |
 | Published language | un format d'échange documenté, distinct du modèle interne | les payloads d'événements de la context map |
 
 - **Piège** : une relation bidirectionnelle entre deux BC cœur. Ici, `mise-en-relation` et `rencontre` dépendent l'un de l'autre (`DemandeAcceptee` dans un sens, `DesistementSignale` dans l'autre) : c'est un couplage à surveiller, noté dans l'ADR-001.
@@ -57,7 +57,7 @@ Le DDD stratégique découpe le domaine et fixe le langage, avant toute ligne de
 ### Cœur, support, générique — en place
 
 - **Quoi** : un BC **cœur** fait la différence du produit et mérite le meilleur soin ; un BC de **support** est nécessaire mais banal ; un BC **générique** s'achète ou se délègue.
-- **Dans skoa** : `mise-en-relation` et `rencontre` sont cœur, `suivi` est support, l'identité est générique et déléguée à Keycloak.
+- **Dans skoa** : `mise-en-relation` et `rencontre` sont cœur, `suivi` est support, l'identité est générique et confiée à une application séparée (ADR-005).
 - **Piège** : mettre le même effort partout. Le mutation testing, par exemple, compte surtout pour `mise-en-relation`.
 
 ---
@@ -70,6 +70,7 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 
 - **Quoi** : un groupe d'objets qu'on modifie d'un seul bloc, dans une transaction, et qui garantit ses propres règles. On n'y accède que par sa racine, et un agrégat ne référence un autre agrégat que par son identifiant.
 - **Dans skoa** : les champs `aggregate` du glossaire, par exemple `Demande`, `Abonnement`, `Rencontre` ou `ElementATraiter`. La gate `invariants` exige les tests d'un agrégat dès que sa classe existe.
+- **Taille** : on regroupe ce qu'une règle oblige à modifier ensemble, pas ce qui « appartient à ». `Adhesion` est séparée de `Structure` parce qu'aucune règle ne lie les adhésions de deux personnes (ADR-004).
 - **Piège** : l'agrégat géant qui charge tout, ou un objet qui tient une référence directe vers un autre agrégat (`demande.getRencontre()`). Les deux rendent les transactions lourdes et les règles floues.
 
 ### Invariant — défini, tests à venir
@@ -194,6 +195,7 @@ Le projet est en Java 21, la version LTS sortie en septembre 2023.
   - `backend/src/main/java/org/skoa/<bc>/package-info.java` déclare un module par BC ;
   - `ModulesTest` appelle `ApplicationModules.verify()`, qui fait échouer le build en cas de dépendance interdite ;
   - `ContextMapTest` utilise la même analyse pour comparer les dépendances réelles à la context map.
+- **Cycles** : `verify()` refuse aussi les cycles. Un événement évite l'appel direct, mais celui qui écoute importe la classe de l'événement : deux BC qui s'écoutent forment un cycle (ADR-004).
 - **Piège** : croire qu'un module est isolé parce qu'il est dans un paquet à part. Sans `verify()` en test, rien ne l'empêche d'importer l'interne d'un autre.
 
 ### Événements entre modules — à venir
@@ -201,6 +203,12 @@ Le projet est en Java 21, la version LTS sortie en septembre 2023.
 - **Quoi** : un module publie avec `ApplicationEventPublisher`, et un autre écoute avec `@ApplicationModuleListener`. Celui-ci s'exécute après la transaction de l'émetteur, de façon asynchrone. Le registre de publication des événements stocke chaque événement jusqu'à son traitement, comme un outbox.
 - **Dans skoa** : c'est le chemin prévu pour tous les événements de la context map.
 - **Piège** : un `@EventListener` classique s'exécute dans la transaction de l'émetteur. Si l'écouteur échoue, il annule l'action de l'émetteur, ce qui recrée le couplage qu'on voulait éviter.
+
+### OAuth avec Spring Security — à venir
+
+- **Quoi** : le serveur d'autorisation émet les jetons, le serveur de ressources les vérifie. Avec le flux *authorization code*, PKCE prouve que celui qui échange le code est celui qui a démarré la connexion ; un front ne peut pas garder de secret. Avec *client credentials*, une application s'identifie elle-même, sans personne connectée.
+- **Dans skoa** : `identite` sera le serveur d'autorisation, le backend le serveur de ressources (ADR-005).
+- **Piège** : mettre dans le jeton des faits métier, comme l'Adhesion ou le rôle de Referent. Le jeton reste valable après que le fait a changé.
 
 ---
 
