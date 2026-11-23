@@ -1,11 +1,14 @@
 # Suivi — support
 
 ## Mission
-Donner au Referent de chaque Structure de quoi prendre soin des adhérents : savoir qui rappeler, et voir où l'entraide manque de monde.
-Il ne décide rien de la mise en relation ni des rencontres : il écoute leurs événements et ne montre que ce qui aide à recontacter une personne ou à lire l'activité en chiffres.
+Tenir les Structures et leurs Adhesions, et donner au Referent de chaque Structure de quoi prendre soin des adhérents : savoir qui rappeler, et voir où l'entraide manque de monde.
+Il dit qui est Adherent d'une Structure, mais ne décide rien de la mise en relation ni des rencontres : il écoute leurs événements et ne montre que ce qui aide à recontacter une personne ou à lire l'activité en chiffres.
 
 ## Responsabilités
 - Créer une Structure (NomAffiche, IdentiteVisuelle, Referent, TelephoneDeLaStructure) et publier `StructureCreee`.
+- Enregistrer une Adhesion à la demande du Referent de la Structure et publier `AdhesionEnregistree`.
+- Terminer une Adhesion à la demande de l'Adherent seul, sans motif, et publier `AdhesionTerminee`.
+- Montrer au Referent, et à lui seul, le prénom et l'email de l'AdherentConcerne (traduction de l'identité par l'ACL, sans les stocker).
 - Ouvrir un ElementATraiter quand un Retour exprime un BesoinDEnParler ou qu'une Demande expire, au nom de l'AdherentConcerne seulement.
 - Permettre au Referent de marquer un ElementATraiter comme traité par un Rappel.
 - Calculer les Indicateurs d'une Structure par Periode : demandes, rencontres faites, demandes expirées, temps moyen avant acceptation, ServiceEnManque, adhérents en pause ou invités à faire une pause.
@@ -16,13 +19,14 @@ Il ne décide rien de la mise en relation ni des rencontres : il écoute leurs �
 - Le contenu des Messages et le déroulé d'une Rencontre : cela relève de `rencontre`.
 - Le signalement d'un adhérent, la suspension, la sanction : hors POC (ADR-001).
 - Les événements de la Structure (balades, ateliers) et l'analyse de pratiques : hors POC (ADR-001).
-- Les comptes, l'authentification et l'appartenance technique à une Structure : délégués à Keycloak.
+- Les comptes et l'authentification : ils relèvent d'`identite` (ADR-005). Une Adhesion dit à quelle Structure une personne appartient, jamais comment elle se connecte.
 - Tout diagnostic, toute situation personnelle ou de santé.
 
 ## Agrégats
 | Agrégat | Racine de cohérence |
 |---|---|
 | `Structure` | NomAffiche, IdentiteVisuelle, Referent, TelephoneDeLaStructure, SeuilAffichageActivite |
+| `Adhesion` | Adherent, Structure, date d'enregistrement, date de fin éventuelle |
 | `ElementATraiter` | AdherentConcerne, Motif, date d'ouverture, Rappel, statut (AFaire, Rappele) |
 | `Indicateurs` | modèle de lecture par Structure et par Periode, reconstruit à partir des événements consommés |
 
@@ -30,6 +34,8 @@ Il ne décide rien de la mise en relation ni des rencontres : il écoute leurs �
 | Événement | Consommé par |
 |---|---|
 | `StructureCreee` | mise-en-relation |
+| `AdhesionEnregistree` | mise-en-relation |
+| `AdhesionTerminee` | mise-en-relation |
 
 ## Événements consommés
 | Événement | Émis par | Effet |

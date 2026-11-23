@@ -215,6 +215,18 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
 - **Leçon** : le TDD ne laisse aucune trace dans le résultat final. Un test écrit avant le code et un test écrit après se ressemblent. La seule preuve possible est de rejouer le test sans le code. Elle ne dit pas que le test a été écrit en premier, seulement qu'il aurait pu échouer, et c'est ce qui compte pour la qualité.
 - **Simplification** : un seul runner rejoue tout le backend trois fois, soit environ une minute aujourd'hui. Avec beaucoup de tests, il faudrait ne rejouer que les classes touchées.
 
+### 2026-11-23 — Q4 tranchée : deux gates vertes peuvent se contredire
+
+- **Fait** : ADR-004 (adhésions dans `suivi`) et ADR-005 (serveur d'autorisation Spring, sans Keycloak), avec les changements de `contexts/`. Le check « Tests rejoués » est devenu obligatoire dans le ruleset de `main`.
+- **Choix** :
+  - Les options techniques ont été essayées dans une copie jetable avant d'écrire les ADR : le cycle entre modules, l'emplacement d'`identite`, le démarrage du serveur d'autorisation.
+  - Les invariants de la fin d'Adhesion ne sont pas déclarés maintenant : la gate `invariants` les exigerait avant le code qui les concerne.
+- **Friction** :
+  - `ContextMapTest` autorise un cycle déclaré, `ModulesTest` le refuse. Sur des BC vides, les deux étaient vertes depuis leur création. La context map de S0 n'était donc pas codable, et rien ne le disait.
+  - Le modèle déléguait à Keycloak plus que la connexion. En l'écartant, on a vu qu'il portait aussi l'annuaire, et qu'aucun BC ne savait qui est Referent.
+- **Leçon** : voir rougir chaque gate séparément ne suffit pas. Il faut aussi un cas valide et complet qui les traverse toutes ; c'est ce que fera la fonctionnalité de bout en bout.
+- **Simplification** : `identite` ne passera pas par les gates de domaine. La gate `langage` ne la lit même pas.
+
 ---
 
 ## Reste à faire en S1 (au 18/11/2026)

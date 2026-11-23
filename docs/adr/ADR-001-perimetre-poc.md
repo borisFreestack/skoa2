@@ -1,7 +1,7 @@
 # ADR-001 — Périmètre du POC : trois bounded contexts issus de la maquette v0.2
 
 Date : 2026-11-13
-Statut : Accepté
+Statut : Accepté, complété par l'ADR-004 (adhésions) et remplacé par l'ADR-005 pour tout ce qui concerne Keycloak
 
 ## Contexte
 

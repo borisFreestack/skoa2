@@ -69,3 +69,13 @@ invariants:
     regle: Après un DesistementSignale, la Demande reprend ses Vagues si son Echeance n'est pas atteinte, et le Preneur désisté n'est plus sollicité pour elle.
     agregat: Demande
     exemple_violation: Léa se désiste, et la Vague suivante la sollicite à nouveau pour la même Demande.
+
+  - id: INV-MER-015
+    regle: Un Abonnement n'existe que pour un Adherent de la Structure.
+    agregat: Abonnement
+    exemple_violation: Karim, qui n'est pas Adherent d'AgoraFolks, y enregistre un Abonnement « Transports ».
+
+  - id: INV-MER-016
+    regle: Seul un Adherent de la Structure peut y envoyer une Demande, être sollicité ou devenir Preneur.
+    agregat: Demande
+    exemple_violation: Léa a quitté AgoraFolks, dit oui à une Sollicitation reçue avant son départ, et devient Preneur.
