@@ -1,6 +1,6 @@
 # État du projet skoa
 
-Mis à jour : 2026-11-23.
+Mis à jour : 2026-11-24.
 
 Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à chaque fin de session, pas complété : l'historique est dans Git, le vécu dans `docs/journal-sdlc.md`. Les artefacts eux-mêmes font foi : `contexts/`, `docs/adr/`, `CLAUDE.md`, `gates/`.
 
@@ -8,7 +8,7 @@ Ce fichier dit où on en est, pour reprendre au même point. Il est réécrit à
 
 ## En une phrase
 
-S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses gates de qualité : squelette, contrats, CI, gates DDD, ArchUnit, PIT, tests rejoués sur la branche de base, protection des fichiers. Il reste la fonctionnalité de bout en bout, puis les images et la preview. Q4 est tranchée (ADR-004) et l'identité se fera sans Keycloak (ADR-005). Le modèle correspondant est sur `main` (PR #8, mergée le 23/11). Il n'y a encore aucun code métier. Le prochain pas est de trancher O4, puis d'écrire ce premier code.
+S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses gates de qualité : squelette, contrats, CI, gates DDD, ArchUnit, PIT, tests rejoués sur la branche de base, protection des fichiers. Il reste la fonctionnalité de bout en bout, puis les images et la preview. Q4 est tranchée (ADR-004) et l'identité se fera sans Keycloak (ADR-005). Le modèle correspondant est sur `main` (PR #8, mergée le 23/11). O4 est tranchée le 24/11 : le porteur du projet écrit `Adhesion` lui-même, en TDD. Il n'y a encore aucun code métier. Le prochain pas est le premier test rouge de `AdhesionTest`.
 
 ## Les trois objectifs (ADR-002)
 
@@ -34,13 +34,23 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses ga
 
 ## En cours
 
-- **Point d'arrêt du 23/11** : aucune tâche commencée. À la reprise, répondre à O4.
+- **Point d'arrêt du 24/11** : l'agrégat `Adhesion` (`suivi`), écrit par le porteur du projet. Aucun test ni aucune classe écrits.
+  - **Terrain** : branche locale `s1/adhesion`, créée depuis `main` (`4916408`) et sans commit. Trois `package-info.java` **non commités** dans `backend/src/main/java/org/skoa/suivi/` (`domaine`, `application`, `evenements`). Avec eux, `./gradlew build` et `gates/verifier.py` passent.
+  - **À trancher** : A9, ci-dessous. Le test 1 n'en dépend pas.
+  - **Plan de `AdhesionTest`** (`backend/src/test/java/org/skoa/suivi/domaine/`), un test à la fois, avec une fausse implémentation en mémoire du port `Adhesions` :
+    1. Camille est enregistrée chez AgoraFolks : l'Adhesion porte l'Adherent, la Structure et `enregistreeLe` ;
+    2. `INV-SUI-008` (dans le `@DisplayName`) : sa seconde Adhesion chez AgoraFolks est refusée, avec le code le plus naïf ;
+    3. Camille dans une autre Structure est acceptée ;
+    4. une autre personne chez AgoraFolks est acceptée.
+  - **Proposé** : `enregistreeLe` reçu en paramètre (`Instant`). L'assistant relit sans écrire à la place du porteur du projet.
+  - **Au cycle suivant** : `AdhesionEnregistree`. Hors de ce cycle : la fin d'Adhesion, et « seul le Referent enregistre », faute d'agrégat `Structure`.
+  - **Dans la PR du code** : fiches « invariant d'ensemble », « triangulation » et « port » à ajouter à `docs/apprentissage.md`.
 - **ADR-003** (agent reviewer Devstral via l'API Mistral, non bloquant) : statut « Proposé », questions R1 à R4 ouvertes. Prévu pour S2, ou dès S1 selon R2.
 
 ## Prochaines étapes (ordre du backlog S1)
 
-1. Trancher O4 (où le porteur du projet code lui-même) : elle conditionne l'étape suivante.
-2. Fonctionnalité de bout en bout : enregistrer une Adhesion (`suivi`), puis s'abonner à un service et recevoir une Sollicitation pour une Demande proche (`mise-en-relation`), avec des identifiants fictifs fixes. Si O4 est tranchée dans ce sens, le porteur du projet l'écrit en partie à la main, en TDD. Premier code métier : les gates d'invariants, d'architecture, PIT et tests rejoués jugeront enfin du vrai code.
+1. `Adhesion` en TDD, écrite par le porteur du projet (voir « En cours »), puis la publication de `AdhesionEnregistree`.
+2. Suite de la fonctionnalité de bout en bout : enregistrer une Adhesion (`suivi`), puis s'abonner à un service et recevoir une Sollicitation pour une Demande proche (`mise-en-relation`), avec des identifiants fictifs fixes. Le porteur du projet écrit ensuite `Demande`. Premier code métier : les gates d'invariants, d'architecture, PIT et tests rejoués jugeront enfin du vrai code.
 3. `identite`, serveur d'autorisation Spring en application séparée (ADR-005).
 4. Images (Jib, Docker), preview Helm sur k3d, e2e Playwright, déploiement et rollback.
 
@@ -59,6 +69,7 @@ S0 (modélisation) est terminée. S1 (walking skeleton et CI/CD) a toutes ses ga
 | A5 | Une Rencontre en cours survit-elle au départ d'un Participant ? | Oui |
 | A6 | `ModulesTest` refuse les cycles que la context map déclare | Les tolérer s'ils sont déclarés, **avant le premier écouteur dans `suivi`** |
 | A8 | Publier `ReferentDesigne` vers `mise-en-relation` ? | Oui, par une tâche contrat |
+| A9 | Qui applique INV-SUI-008, qui porte sur plusieurs Adhesions ? | Recommandé, sans réponse : le domaine (`Adhesion.enregistrer` interroge le port `Adhesions`) plutôt que le cas d'usage. Dans les deux cas, une contrainte d'unicité en base pour les enregistrements simultanés, quand la persistance arrivera |
 | I1 à I4 | Questions d'identité | Voir ADR-005 |
 
 Q4 (adhésions) est tranchée : dans `suivi`, ADR-004. Q7 (Gradle ou Maven) est tranchée : Gradle.
@@ -70,7 +81,6 @@ Q4 (adhésions) est tranchée : dans `suivi`, ADR-004. Q7 (Gradle ou Maven) est 
 | O1 | Les livrables « montrables » restent-ils des objectifs ? | Sous-produits de l'apprentissage |
 | O2 | Refaire une partie de S1 à la main ? | Non, l'écart est noté au journal |
 | O3 | Le reviewer lit-il le journal ? | Non tranché |
-| O4 | Où le porteur du projet code-t-il lui-même ? | Piste de départ : l'agrégat `Demande` en TDD. Proposé le 23/11, sans réponse : commencer par `Adhesion` (un seul invariant, INV-SUI-008), puis `Demande` |
 | — | Identité GitHub des agents en S2 | GitHub App ou `github.token` d'un workflow, **jamais le compte du propriétaire** |
 | — | Vocabulaire interdit partout lisible par la machine | Aujourd'hui en prose dans `CLAUDE.md`, lu par la gate |
 | — | Méthode de merge | Squash et merge commit tous deux autorisés ; à restreindre au squash si on veut un historique linéaire |
@@ -79,6 +89,8 @@ Q4 (adhésions) est tranchée : dans `suivi`, ADR-004. Q7 (Gradle ou Maven) est 
 | — | Tests rejoués côté Angular (`*.spec.ts`) | Non rejoués : à faire quand le front aura du code de BC |
 | — | PIT sur le seul BC modifié, seuil par BC (cœur ou support) | PIT mute tous les BC, seuil unique de 80 % |
 | — | Orchestrateur de S2 | Claude Agent SDK, ou Claude Code headless lancé par la CI (cadrage) |
+
+O4 (où le porteur du projet code-t-il lui-même) est tranchée le 24/11 : `Adhesion`, puis `Demande`, en TDD.
 
 ## Comment on travaille
 
