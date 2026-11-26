@@ -66,18 +66,26 @@ Le DDD stratégique découpe le domaine et fixe le langage, avant toute ligne de
 
 Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec la fonctionnalité de bout en bout de S1.
 
-### Agrégat — défini, code à venir
+### Agrégat — en place
 
 - **Quoi** : un groupe d'objets qu'on modifie d'un seul bloc, dans une transaction, et qui garantit ses propres règles. On n'y accède que par sa racine, et un agrégat ne référence un autre agrégat que par son identifiant.
 - **Dans skoa** : les champs `aggregate` du glossaire, par exemple `Demande`, `Abonnement`, `Rencontre` ou `ElementATraiter`. La gate `invariants` exige les tests d'un agrégat dès que sa classe existe.
+- **Premier dans le code** : `backend/src/main/java/org/skoa/suivi/domaine/Adhesion.java`. Champs `final`, sans setter : un changement d'état passera par une méthode au nom métier (`terminer`), qui pourra garder ses règles.
 - **Taille** : on regroupe ce qu'une règle oblige à modifier ensemble, pas ce qui « appartient à ». `Adhesion` est séparée de `Structure` parce qu'aucune règle ne lie les adhésions de deux personnes (ADR-004).
 - **Piège** : l'agrégat géant qui charge tout, ou un objet qui tient une référence directe vers un autre agrégat (`demande.getRencontre()`). Les deux rendent les transactions lourdes et les règles floues.
 
-### Invariant — défini, tests à venir
+### Invariant — en place
 
 - **Quoi** : une règle qui doit être vraie après chaque transaction de l'agrégat. C'est l'agrégat qui la garantit, pas le contrôleur ni le service.
 - **Dans skoa** : `contexts/<bc>/invariants.yaml`. Le champ `exemple_violation` est déjà un cas de test tout écrit. Exemple : INV-MER-005, « un Adherent n'est jamais sollicité pour sa propre Demande ».
 - **Piège** : vérifier la règle dans un service applicatif. Le jour où un deuxième chemin modifie l'agrégat, la règle saute.
+- **Invariant d'ensemble** : une règle qui porte sur plusieurs instances, comme une unicité, dépasse l'agrégat. INV-SUI-008 (« au plus une Adhesion en cours par Adherent dans une même Structure ») ne peut pas être vu par une Adhesion seule. Le domaine l'exprime en interrogeant un port (`Adhesions.aUneAdhesionEnCours`) ; la base le garantira face aux enregistrements simultanés, par une contrainte d'unicité. Test : `AdhesionTest`, « INV-SUI-008 … ».
+
+### Fabrique — en place
+
+- **Quoi** : une méthode statique qui crée l'agrégat, nommée dans la langue du domaine, et qui peut refuser de créer. Le constructeur est `private` : c'est le seul chemin de création, donc la règle ne peut pas être contournée.
+- **Dans skoa** : `Adhesion.enregistrer(adhesionId, adherentId, structureId, enregistreeLe, adhesions)`. Ce qui est arbitraire ou dépend du moment (l'identifiant, la date) vient de l'extérieur : le domaine reste déterministe et le test peut tout vérifier.
+- **Piège** : sauvegarder dans la fabrique. Créer et sauvegarder sont deux responsabilités ; la sauvegarde appartient au cas d'usage, dans sa transaction.
 
 ### Événement de domaine — défini, code à venir
 
@@ -91,22 +99,25 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 - **Dans skoa** : les candidats sont `Creneau`, `LieuDeRencontre`, `Rayon` et `Ressenti`. Un record Java est la forme naturelle d'un value object.
 - **Piège** : passer des `String` et des `int` partout (« primitive obsession »). La validation se disperse, et rien n'empêche de passer un rayon à la place d'un plafond.
 
-### Architecture hexagonale (ports et adaptateurs) — règles en place, code à venir
+### Architecture hexagonale (ports et adaptateurs) — en place
 
 - **Quoi** : le domaine est au centre et ne connaît aucune technique. Il déclare des **ports** (des interfaces : « enregistrer une Demande », « trouver les Abonnements proches ») ; des **adaptateurs** les implémentent avec Spring, une base ou HTTP. Les dépendances pointent toujours vers le domaine, jamais l'inverse.
 - **Dans skoa** : chaque BC range son code en cinq paquets, `domaine`, `application`, `adaptateurs`, `evenements` et `api` (le code généré depuis `contracts/`). Les règles sont dans `backend/src/test/java/org/skoa/ArchitectureHexagonale.java` et décrites dans `gates/README.md`.
+- **Premier port** : `Adhesions`, une interface de `suivi/domaine` à une seule méthode, celle dont la règle a besoin. Le domaine possède son port et le nomme dans sa langue (inversion de dépendance) ; l'implémentation vit dans les tests (le fake) et, plus tard, dans `adaptateurs`.
 - **Piège** : une annotation Spring ou JPA « juste pour ce champ » dans le domaine. Le domaine ne se teste plus sans démarrer Spring, et chaque changement d'infrastructure touche les règles métier.
 
 ---
 
 ## 3. TDD et qualité des tests
 
-### Rouge, vert, refactor — gate en place, code métier à venir
+### Rouge, vert, refactor — en place
 
 - **Quoi** : on écrit un test qui échoue (rouge), puis le minimum de code pour le faire passer (vert), puis on nettoie sans changer le comportement (refactor). Le test guide le design au lieu de constater après coup.
 - **Dans skoa** : le cadrage prévoit un agent tests qui écrit des tests qui doivent échouer, avant l'agent code. La gate « tests rejoués sur la branche de base » (`gates/tests_rejoues.py`) le prouve après coup : elle rejoue chaque nouveau test d'un BC sur la branche de base, sans le code de la PR, et bloque s'il y passe déjà.
 - **Deux sortes de rouge** : le test ne compile pas, parce que la classe ou la méthode n'existe pas encore ; ou le test compile et son assertion échoue, parce que le comportement est absent ou faux. Les deux comptent. Le second est le plus probant : il montre que le test distingue l'ancien comportement du nouveau.
 - **Piège** : écrire le test après le code et le faire passer du premier coup. Un test qu'on n'a jamais vu échouer ne prouve rien.
+- **Vu sur `Adhesion`** : une fabrique qui renvoie `null` donne un rouge par assertion dès le premier test. Le refactor (vérifier avant de créer, message de l'exception) s'est fait tests verts, et ils le sont restés.
+- **Triangulation** : écrire d'abord le code le plus naïf, puis un test qui le contredit, plutôt que de généraliser d'avance. Sur `Adhesion`, les tests prévus pour trianguler (autre Structure, autre personne) n'auraient pas pu rougir : c'est le fake qui filtrait. Ils ont été reportés aux tests de l'adaptateur.
 
 ### Voir rougir — en place pour les gates
 
@@ -129,11 +140,19 @@ Le DDD tactique, ce sont les briques du modèle dans le code. Il commence avec l
 - **Dans skoa** : l'agent tests du cadrage voit « les ports du BC », pas l'implémentation.
 - **Piège** : mocker chaque collaborateur interne. Le moindre refactoring casse des dizaines de tests qui ne protégeaient rien.
 
+### Fake plutôt que mock — en place
+
+- **Quoi** : un fake est une vraie implémentation d'un port, simplifiée (une liste en mémoire). Il a un comportement, là où un mock vérifie des appels. Le test juge alors ce que la règle produit, pas comment elle interroge le port.
+- **Dans skoa** : `backend/src/test/java/org/skoa/suivi/domaine/AdhesionsEnMemoire.java`, dans `test` et jamais dans `main`. Sa méthode `ajouter` n'existe que sur lui : le port n'a que la méthode dont le domaine a besoin.
+- **Arrange, act, assert** : le test prépare l'état par le fake (`ajouter`), appelle une seule fois le code testé (`Adhesion.enregistrer`), puis vérifie.
+- **Piège, vécu** : mettre la règle dans le fake. Le test était vert, mais l'exception venait de `AdhesionsEnMemoire.ajouter` : le domaine ne vérifiait rien. Pour le repérer, se demander quelle ligne fait échouer le test ; si ce n'est pas un appel au code de production, le test ne le juge pas. PIT l'aurait vu aussi : il ne mute que `main`.
+
 ### Mutation testing (PIT) — en place
 
 - **Quoi** : l'outil modifie le code (un `>` devient `>=`, un `return true` devient `return false`) et vérifie qu'au moins un test échoue. Un mutant qui survit révèle un test complaisant.
 - **Dans skoa** : le bloc `pitest` de `backend/build.gradle.kts`. PIT mute les paquets `domaine` et `application` de chaque BC, avec les seuls tests des BC, et fait échouer `./gradlew build` sous 80 % de mutants tués. Le rapport est dans `backend/build/reports/pitest/`. C'est la parade du cadrage contre un agent qui écrirait des tests qui ne vérifient rien.
 - **Exemple vu** : `return km <= rayon` testé par le seul cas `(1, 5)` donne 33 %. Le mutant `<` survit, car 1 < 5 reste vrai. Il faut tester la limite `(5, 5)` et le cas `(6, 5)` pour atteindre 100 %.
+- **Premier code métier** : sur `Adhesion`, 6 mutants, 6 tués. Les accesseurs qui renvoient `null` sont tués par les assertions du test 1, l'`if` inversé par le test 2.
 - **Piège** : viser 100 %. Certains mutants sont équivalents (ils ne changent rien d'observable) ; le score sert à repérer les zones faibles, pas à être maximisé.
 
 ---
@@ -146,6 +165,7 @@ Le projet est en Java 21, la version LTS sortie en septembre 2023.
 
 - **Quoi** : `record DemandeAcceptee(String demandeId, ...) {}` déclare une classe immuable, avec constructeur, accesseurs (`demandeId()`, sans `get`), `equals`, `hashCode` et `toString`.
 - **Dans skoa** : les records imbriqués de `ConformiteContextMap.java`. Ce seront aussi les événements publiés et les value objects.
+- **Hors des records** : le style d'accesseur sans `get` (`adherentId()`) se répand aussi dans les classes ordinaires, comme `Adhesion`, qui ne peut pas être un record puisqu'elle aura une date de fin.
 - **Piège** : un record est immuable en surface seulement : un composant `List` reste modifiable. Il faut le copier (`List.copyOf`) dans le constructeur compact.
 - **Nouveau** : stable depuis Java 16.
 
@@ -275,12 +295,14 @@ Le front est en Angular 22.
 - Quel BC de skoa est conformist, et qu'est-ce que ça lui coûte ?
 - `Creneau` est-il une entité ou un value object ? Pourquoi ?
 - Où doit vivre la vérification de INV-MER-005 : contrôleur, service ou agrégat ?
+- INV-SUI-008 porte sur plusieurs Adhesions : comment le domaine le garantit-il, et que ne garantit-il pas ?
 
 **TDD**
 - Qu'est-ce qu'un test écrit en TDD prouve qu'un test écrit après le code ne prouve pas ?
 - Quelle différence entre une couverture de lignes de 100 % et un score de mutation de 100 % ?
 - Un port du domaine est une interface : où vit-elle, et où vit son implémentation ?
 - Pourquoi un test ajouté pendant un refactoring est-il bloqué par la gate des tests rejoués, et où doit-il aller ?
+- Un test est vert : comment savoir s'il juge le domaine ou le fake ?
 
 **Java, Spring, Angular**
 - Que vérifie `ApplicationModules.verify()`, et que ne vérifie-t-il pas ?
