@@ -227,6 +227,16 @@ On écrit au fil de l'eau. Une entrée reconstituée plus tard le signale.
 - **Leçon** : voir rougir chaque gate séparément ne suffit pas. Il faut aussi un cas valide et complet qui les traverse toutes ; c'est ce que fera la fonctionnalité de bout en bout.
 - **Simplification** : `identite` ne passera pas par les gates de domaine. La gate `langage` ne la lit même pas.
 
+### 2026-11-26 — Premier code métier : `Adhesion`, écrit à la main
+
+- **Fait** : l'enregistrement d'une `Adhesion` et INV-SUI-008, écrits par le porteur du projet en TDD. L'assistant a relu sans écrire le code, sauf un nom affiché, à la demande. Toutes les gates passent sur du vrai code pour la première fois ; PIT tue 6 mutants sur 6.
+- **Choix** : O4 (le porteur du projet code `Adhesion`, puis `Demande`) et A9 (INV-SUI-008 vit dans le domaine, par un port).
+- **Friction** :
+  - La règle a d'abord été écrite dans le fake : test vert, domaine nu. Aucune gate ne l'aurait bloqué, puisque PIT ne mute pas le code de test. Seule la relecture l'a vu.
+  - Le nom affiché sans `INV-SUI-008` a laissé la gate `invariants` rouge pendant trois relectures. La gate l'aurait bloqué en CI ; la boucle locale ne la lance pas d'elle-même.
+  - Le plan de tests de l'assistant était faux sur deux tests : ils n'auraient pas pu rougir. Corrigé en cours de route, et noté.
+- **Leçon** : la gate des tests rejoués ne voit qu'un rouge par compilation pour un premier agrégat. Le rouge par assertion n'est prouvé que par celui qui l'a vu.
+
 ---
 
 ## Reste à faire en S1 (au 18/11/2026)
